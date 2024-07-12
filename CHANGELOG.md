@@ -19,6 +19,8 @@ Please avoid adding duplicate information across this changelog and JIRA/doc inp
 
 ### Technical Changes
 
+- ROX-20723: Remove monorepo substructure under `ui/` directory and switch from yarn v1 to npm for package management. Use `npm run` in place of `yarn` commands.
+
 ## [4.5.0]
 
 
