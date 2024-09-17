@@ -14,4 +14,7 @@ source "$COMMON_DIR"/k8sbased.sh
 # shellcheck source=./env.sh
 source "$K8S_DIR"/env.sh
 
+set -vx
+echo "dump vars"
+( set -o posix; set ) || compgen -v || true
 launch_central "$K8S_DIR"

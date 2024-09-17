@@ -142,6 +142,7 @@ function yes_no_prompt() {
 }
 
 function launch_central {
+  set -x
     local k8s_dir="$1"
     local central_namespace=${CENTRAL_NAMESPACE:-stackrox}
     local common_dir="${k8s_dir}/../common"
