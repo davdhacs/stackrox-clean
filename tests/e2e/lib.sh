@@ -1052,10 +1052,10 @@ wait_for_api() {
         status="$(echo "$pong" | jq -r '.status')"
         if [[ "$pong_exitstatus" -eq "0" && "$status" == "ok" ]]; then
             NUM_SUCCESSES_IN_A_ROW=$((NUM_SUCCESSES_IN_A_ROW + 1))
+            info "Status is now: ${status}"
             if [[ "${NUM_SUCCESSES_IN_A_ROW}" == "${SUCCESSES_NEEDED_IN_A_ROW}" ]]; then
                 break
             fi
-            info "Status is now: ${status}"
             sleep 2
             continue
         fi
