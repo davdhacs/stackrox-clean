@@ -162,6 +162,27 @@ bq_update_job_record() {
         WHERE id=@id"
 }
 
+bq_job_write() {
+        #--synchronous_mode=false \
+    bq query \
+        --use_legacy_sql=false \
+        --batch \
+        --parameter="id::$1" \
+        --parameter="name::$2" \
+        --parameter="repo::$3" \
+        --parameter="branch::$4" \
+        --parameter="pr_number:INTEGER:${5:-NULL}" \
+        --parameter="commit_sha::$6" \
+        --parameter="ci_system::$7" \
+        --parameter="outcome::$8" \
+        --parameter="started_at::$9" \
+        --parameter="stopped_at::${10}" \
+        "INSERT INTO ${_JOBS_TABLE_NAME}
+            (id, name, repo, branch, pr_number, commit_sha, started_at, stopped_at, outcome, ci_system)
+        VALUES
+        (@id, @name, @repo, @branch, @pr_number, @commit_sha, PARSE_TIMESTAMP('%s', @started_at), PARSE_TIMESTAMP('%s', @stopped_at), @outcome, @ci_system)"
+}
+
 slack_top_n_failures() {
     local n="${1:-10}"
     local job_name_match="${2:-qa}"
