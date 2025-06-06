@@ -21,7 +21,7 @@ runs:
         credentials_json: '${{ inputs.gcp-account }}'
         export_environment_variables: true
         create_credentials_file: true
-        cleanup_credentials: false
+        cleanup_credentials: true
 
     - name: Test gcp auth
       continue-on-error: true
