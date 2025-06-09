@@ -62,7 +62,8 @@ runs:
         df --si /
         free=$(df -BGB --output=avail / | tail -1)
         if [[ ${free%GB} -lt "${{ inputs.free-disk-space }}" ]]; then
-          printf "For container workflows, please mount the host /usr and /opt to allow deleting unused tools:\nvolumes:\n\t- /usr:/mnt/usr\n\t- /opt:/mnt/opt"
+          printf "For container workflows, please mount the host /usr and /opt to allow deleting unused tools:\nvolumes:\n\t- /usr:/mnt/usr\n\t- /opt:/mnt/opt" \
+            | tee -a "$GITHUB_STEP_SUMMARY"
           exit 1
         fi
 
