@@ -115,7 +115,7 @@ runs:
           update_job_record outcome "${{ job.status }}" stopped_at "CURRENT_TIMESTAMP()";
           df --si /;
           free=$(df -BGB --output=avail / | tail -1);
-          echo "Free disk space before: ${{ steps.disk-check.outputs.free }}, and after: ${free}."
+          echo "Free disk space before: ${{ steps.disk-check.outputs.free }}, and after: ${free}.";
           if [[ ${free%GB} -lt 5 ]]; then\
             printf "Low free disk space post-job: ${free}" | tee -a "$GITHUB_STEP_SUMMARY";\
           else\
