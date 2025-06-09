@@ -50,7 +50,7 @@ runs:
           free=$(df -BGB --output=avail / | tail -1)
           if [[ ${free%GB} -ge "${{ inputs.free-disk-space }}" ]]; then
             echo "Reached required free disk space ${{ inputs.free-disk-space }} [${free} free]."
-            break
+            exit 0
           fi
           if [[ -d "/mnt${d}" ]]; then
             rm -rf "/mnt${d}"
@@ -73,11 +73,6 @@ runs:
       continue-on-error: true
       shell: bash
       run: |
-        free=$(df -BGB --output=avail / | tail -1)
-        if [[ ${free%GB} -ge "${{ inputs.free-disk-space }}" ]]; then
-          echo "Skipping docker prune. Already reached required free disk space ${{ inputs.free-disk-space }} [${free} free]."
-          exit
-        fi
         printf 'Docker prune: '
         docker system prune --force --all
         df --si /
