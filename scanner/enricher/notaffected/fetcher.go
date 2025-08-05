@@ -1,4 +1,4 @@
-package csaf
+package notaffected
 
 import (
 	"archive/tar"
@@ -26,8 +26,8 @@ import (
 )
 
 var (
-	// compressedFileTimeout matches Claircore's VEX https://github.com/quay/claircore/blob/v1.5.34/rhel/vex/fetcher.go.
-	compressedFileTimeout = 2 * time.Minute
+	// defaultCompressedFileTimeout matches Claircore's VEX https://github.com/quay/claircore/blob/v1.5.39/rhel/vex/updater.go.
+	defaultCompressedFileTimeout = 2 * time.Minute
 )
 
 // fingerprint is used to track the state of the changes.csv and deletions.csv endpoints.
@@ -37,9 +37,9 @@ var (
 // is constructed, however, it mentions that servers should avoid backslashes.
 // Hence, the `\` character is used as a separator when stringifying.
 type fingerprint struct {
-	changesEtag, deletionsEtag string
-	requestTime                time.Time
-	version                    string
+	changesEtag string
+	requestTime time.Time
+	version     string
 }
 
 // parseFingerprint takes a generic driver.Fingerprint and creates a vex.fingerprint.
@@ -50,37 +50,36 @@ func parseFingerprint(in driver.Fingerprint) (*fingerprint, error) {
 		return &fingerprint{}, nil
 	}
 	f := strings.Split(fp, `\`)
-	if len(f) != 4 {
+	if len(f) != 3 {
 		return nil, errors.New("could not parse fingerprint")
 	}
-	rt, err := time.Parse(time.RFC3339, f[2])
+	rt, err := time.Parse(time.RFC3339, f[1])
 	if err != nil {
 		return nil, fmt.Errorf("could not parse fingerprint's requestTime: %w", err)
 	}
 	return &fingerprint{
-		changesEtag:   f[0],
-		deletionsEtag: f[1],
-		requestTime:   rt,
-		version:       f[3],
+		changesEtag: f[0],
+		requestTime: rt,
+		version:     f[2],
 	}, nil
 }
 
 // String represents a fingerprint in string format with `\` acting as the delimiter.
 func (fp *fingerprint) String() string {
-	return fp.changesEtag + `\` + fp.deletionsEtag + `\` + fp.requestTime.Format(time.RFC3339) + `\` + fp.version
+	return fp.changesEtag + `\` + fp.requestTime.Format(time.RFC3339) + `\` + fp.version
 }
 
 // FetchEnrichment implements driver.EnrichmentUpdater.
-// This method fetches Red Hat's CSAF data (https://security.access.redhat.com/data/csaf/v2/advisories/),
+// This method fetches Red Hat's VEX data (https://security.access.redhat.com/data/csaf/v2/vex/),
 // unless configured otherwise, and returns a Snappy-compressed file with each advisory's data written to each line.
 func (e *Enricher) FetchEnrichment(ctx context.Context, hint driver.Fingerprint) (io.ReadCloser, driver.Fingerprint, error) {
-	ctx = zlog.ContextWithValues(ctx, "component", "enricher/csaf/Enricher/FetchEnrichment")
+	ctx = zlog.ContextWithValues(ctx, "component", "enricher/notaffected/Enricher/FetchEnrichment")
 	fp, err := parseFingerprint(hint)
 	if err != nil {
 		return nil, hint, err
 	}
 
-	f, err := os.CreateTemp("", "enricher.csaf.")
+	f, err := os.CreateTemp("", "enricher.notaffected.")
 	if err != nil {
 		return nil, hint, err
 	}
@@ -104,19 +103,23 @@ func (e *Enricher) FetchEnrichment(ctx context.Context, hint driver.Fingerprint)
 		}
 	}()
 
-	// We need to go after the full corpus of vulnerabilities
-	// First we target the archive_latest.txt file.
-	compressedURL, err := e.getCompressedFileURL(ctx)
-	if err != nil {
-		return nil, hint, fmt.Errorf("could not get compressed file URL: %w", err)
-	}
-	zlog.Debug(ctx).
-		Str("url", compressedURL.String()).
-		Msg("got compressed URL")
+	var compressedURL *url.URL
+	processArchive := fp.changesEtag == "" || fp.version != updaterVersion
+	if processArchive {
+		// We need to go after the full corpus of vulnerabilities
+		// First we target the archive_latest.txt file.
+		compressedURL, err = e.getCompressedFileURL(ctx)
+		if err != nil {
+			return nil, hint, fmt.Errorf("could not get compressed file URL: %w", err)
+		}
+		zlog.Debug(ctx).
+			Str("url", compressedURL.String()).
+			Msg("got compressed URL")
 
-	fp.requestTime, err = e.getLastModified(ctx, compressedURL)
-	if err != nil {
-		return nil, hint, fmt.Errorf("could not get last-modified header: %w", err)
+		fp.requestTime, err = e.getLastModified(ctx, compressedURL)
+		if err != nil {
+			return nil, hint, fmt.Errorf("could not get last-modified header: %w", err)
+		}
 	}
 
 	changed := map[string]bool{}
@@ -129,82 +132,84 @@ func (e *Enricher) FetchEnrichment(ctx context.Context, hint driver.Fingerprint)
 	// as there is no concept of a delta enricher. Processing deletions
 	// only makes sense for the DeltaParse functions for delta updaters.
 
-	rctx, cancel := context.WithTimeout(ctx, compressedFileTimeout)
-	defer cancel()
+	if processArchive {
+		rctx, cancel := context.WithTimeout(ctx, defaultCompressedFileTimeout)
+		defer cancel()
 
-	if compressedURL == nil {
-		return nil, hint, errors.New("compressed file URL needs to be populated")
-	}
-	req, err := http.NewRequestWithContext(rctx, http.MethodGet, compressedURL.String(), nil)
-	if err != nil {
-		return nil, hint, err
-	}
-
-	res, err := e.c.Do(req)
-	if err != nil {
-		return nil, hint, err
-	}
-	defer utils.IgnoreError(res.Body.Close)
-
-	err = checkResponse(res, http.StatusOK)
-	if err != nil {
-		return nil, hint, fmt.Errorf("unexpected response from latest compressed file: %w", err)
-	}
-
-	z, err := zreader.Reader(res.Body)
-	if err != nil {
-		return nil, hint, err
-	}
-	defer utils.IgnoreError(z.Close)
-	r := tar.NewReader(z)
-
-	var (
-		h              *tar.Header
-		buf, bc        bytes.Buffer
-		entriesWritten int
-	)
-	for h, err = r.Next(); errors.Is(err, nil); h, err = r.Next() {
-		buf.Reset()
-		bc.Reset()
-		if h.Typeflag != tar.TypeReg {
-			continue
+		if compressedURL == nil {
+			return nil, hint, errors.New("compressed file URL needs to be populated")
 		}
-		year, err := strconv.ParseInt(path.Dir(h.Name), 10, 64)
+		req, err := http.NewRequestWithContext(rctx, http.MethodGet, compressedURL.String(), nil)
 		if err != nil {
-			return nil, hint, fmt.Errorf("error parsing year %w", err)
-		}
-		if year < lookBackToYear {
-			continue
-		}
-		if changed[path.Base(h.Name)] {
-			// We've already processed this file don't bother appending it to the output
-			continue
-		}
-		buf.Grow(int(h.Size))
-		if _, err := buf.ReadFrom(r); err != nil {
 			return nil, hint, err
 		}
-		// Here we construct new-line-delimited JSON by first compacting the
-		// JSON from the file and writing it to the bc buf, then writing a newline,
-		// and finally writing all those bytes to the snappy.Writer.
-		err = json.Compact(&bc, buf.Bytes())
-		if err != nil {
-			return nil, hint, fmt.Errorf("error compressing JSON %s: %w", h.Name, err)
-		}
-		bc.WriteByte('\n')
-		if _, err := io.Copy(cw, &bc); err != nil {
-			return nil, hint, fmt.Errorf("error writing compacted JSON to tmp file: %w", err)
-		}
-		entriesWritten++
-	}
-	if !errors.Is(err, io.EOF) {
-		return nil, hint, fmt.Errorf("error reading tar contents: %w", err)
-	}
 
-	zlog.Debug(ctx).
-		Str("enricher", e.Name()).
-		Int("entries written", entriesWritten).
-		Msg("finished writing compressed data to spool")
+		res, err := e.c.Do(req)
+		if err != nil {
+			return nil, hint, err
+		}
+		defer utils.IgnoreError(res.Body.Close)
+
+		err = checkResponse(res, http.StatusOK)
+		if err != nil {
+			return nil, hint, fmt.Errorf("unexpected response from latest compressed file: %w", err)
+		}
+
+		z, err := zreader.Reader(res.Body)
+		if err != nil {
+			return nil, hint, err
+		}
+		defer utils.IgnoreError(z.Close)
+		r := tar.NewReader(z)
+
+		var (
+			h              *tar.Header
+			buf, bc        bytes.Buffer
+			entriesWritten int
+		)
+		for h, err = r.Next(); errors.Is(err, nil); h, err = r.Next() {
+			buf.Reset()
+			bc.Reset()
+			if h.Typeflag != tar.TypeReg {
+				continue
+			}
+			year, err := strconv.ParseInt(path.Dir(h.Name), 10, 64)
+			if err != nil {
+				return nil, hint, fmt.Errorf("error parsing year %w", err)
+			}
+			if year < lookBackToYear {
+				continue
+			}
+			if changed[path.Base(h.Name)] {
+				// We've already processed this file don't bother appending it to the output
+				continue
+			}
+			buf.Grow(int(h.Size))
+			if _, err := buf.ReadFrom(r); err != nil {
+				return nil, hint, err
+			}
+			// Here we construct new-line-delimited JSON by first compacting the
+			// JSON from the file and writing it to the bc buf, then writing a newline,
+			// and finally writing all those bytes to the snappy.Writer.
+			err = json.Compact(&bc, buf.Bytes())
+			if err != nil {
+				return nil, hint, fmt.Errorf("error compressing JSON %s: %w", h.Name, err)
+			}
+			bc.WriteByte('\n')
+			if _, err := io.Copy(cw, &bc); err != nil {
+				return nil, hint, fmt.Errorf("error writing compacted JSON to tmp file: %w", err)
+			}
+			entriesWritten++
+		}
+		if !errors.Is(err, io.EOF) {
+			return nil, hint, fmt.Errorf("error reading tar contents: %w", err)
+		}
+
+		zlog.Debug(ctx).
+			Str("enricher", e.Name()).
+			Int("entries written", entriesWritten).
+			Msg("finished writing compressed data to spool")
+	}
 
 	fp.version = updaterVersion
 	fp.requestTime = time.Now()
@@ -271,7 +276,7 @@ func (e *Enricher) getLastModified(ctx context.Context, cu *url.URL) (time.Time,
 // to w means they are deemed to have changed since the compressed
 // file was last processed. w and fp can be modified.
 func (e *Enricher) processChanges(ctx context.Context, w io.Writer, fp *fingerprint, changed map[string]bool) error {
-	tf, err := tmp.NewFile("", "enricher.stackrox.rhel-csaf-changes.")
+	tf, err := tmp.NewFile("", "enricher.stackrox.notaffected-changes.")
 	if err != nil {
 		return err
 	}
