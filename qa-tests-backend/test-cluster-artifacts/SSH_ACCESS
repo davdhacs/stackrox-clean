@@ -1,0 +1,23 @@
+## SSH Access to cluster nodes
+
+`ssh` access to nodes in this cluster can be provided through an ssh bastion
+server. 
+
+The data directory created by this automation (a `data.tgz` artifact in
+infra.rox.systems) provides a script to deploy the bastion server in the cluster
+(`ssh/deploy/deploy.sh`) and a script to ssh to any node in the cluster once the
+bastion in running (`ssh/ssh.sh`).
+
+e.g. Assuming KUBECONFIG is pointing at the cluster created by this automation
+and that there is a data directory at ~/infra/"$CLUSTER"/data.
+
+```
+## Verify
+oc get nodes
+
+## Deploy the bastion
+~/infra/"$CLUSTER"/data/ssh/deploy/deploy.sh
+
+## Connect
+~/infra/"$CLUSTER"/data/ssh/ssh.sh <any node by name>
+```

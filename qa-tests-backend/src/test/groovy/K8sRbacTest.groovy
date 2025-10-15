@@ -62,6 +62,7 @@ class K8sRbacTest extends BaseSpecification {
 
     @Tag("BAT")
     @Tag("COMPATIBILITY")
+    @Tag("OCPInterop")
     // ROX-25270 Test is failing for OSD on AWS
     @IgnoreIf({ Env.CI_JOB_NAME ==~ /.*osd-aws.*/ })
     def "Verify scraped service accounts"() {

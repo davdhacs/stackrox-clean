@@ -118,3 +118,8 @@ pz-test-debug: compile
 deployment-check-test: compile
 	@echo "+ $@"
 	$(GRADLE) testDeploymentCheck $(GRADLE_TEST_ARGS)
+
+.PHONY: ocp-interop-test
+ocp-interop-test: compile
+	@echo "+ $@"
+	$(GRADLE) testOCPInterop $(GRADLE_TEST_ARGS)

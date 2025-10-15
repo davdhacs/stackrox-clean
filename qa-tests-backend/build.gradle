@@ -245,6 +245,12 @@ task testSensorBounceNext(type: Test) {
     }
 }
 
+task testOCPInterop(type: Test) {
+    useJUnitPlatform {
+        includeTags "OCPInterop"
+    }
+}
+
 task runSampleScript(dependsOn: 'classes', type: JavaExec) {
     if (project.hasProperty("runScript")) {
         main = "sampleScripts." + project.getProperty("runScript")

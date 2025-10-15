@@ -105,6 +105,16 @@ class ComplianceTest extends BaseSpecification {
             assert runId == results.runMetadata.runId
             BASE_RESULTS.put(standard, results)
         }
+
+        // Log Compliance Operator availability for debugging
+        def complianceOperatorStandards = BASE_RESULTS.keySet().findAll {
+            it.startsWith("ocp4-") || it.startsWith("rhcos4-")
+        }
+        if (complianceOperatorStandards.isEmpty()) {
+            log.warn "No Compliance Operator standards found - tests will skip gracefully"
+        } else {
+            log.info "Compliance Operator standards available: ${complianceOperatorStandards.sort()}"
+        }
     }
 
     def cleanupSpec() {
@@ -119,6 +129,7 @@ class ComplianceTest extends BaseSpecification {
     }
 
     @Tag("BAT")
+    @Tag("OCPInterop")
     def "Verify static compliance checks"() {
         given:
         "given a known list of static checks"
@@ -204,6 +215,7 @@ class ComplianceTest extends BaseSpecification {
     }
 
     @Tag("BAT")
+    @Tag("OCPInterop")
     def "Verify compliance aggregation results"() {
         given:
         "get compliance aggregation results"
@@ -259,6 +271,7 @@ class ComplianceTest extends BaseSpecification {
     }
 
     @Tag("BAT")
+    @Tag("OCPInterop")
     def "Verify compliance checks contain no ERROR states"() {
         expect:
         "check that each check does not have ERROR state"
@@ -966,17 +979,28 @@ class ComplianceTest extends BaseSpecification {
 
     @Unroll
     @Tag("BAT")
-    @IgnoreIf({ true }) // ROX-12461 The compliance operator tests are not working as expected
+    @Tag("OCPInterop")
     def "Verify Compliance Operator aggregation results on OpenShift for machine configs #standard"() {
+        given:
+        "Running on OpenShift 4.x cluster"
         Assume.assumeTrue(ClusterService.isOpenShift4())
 
-        given:
-        "get compliance aggregation results"
-        log.info "Getting compliance results for ${standard}"
+        and:
+        "Compliance Operator standard exists"
+        log.info "Checking if standard '${standard}' is available"
         ComplianceRunResults run = BASE_RESULTS.get(standard)
 
+        // Skip test if the Compliance Operator standard is not available
+        // This happens when the Compliance Operator is not installed on the cluster
+        if (run == null) {
+            log.warn "Standard '${standard}' not found in BASE_RESULTS. Available standards: ${BASE_RESULTS.keySet()}"
+            log.warn "Compliance Operator may not be installed or configured on this cluster. Skipping test."
+            Assume.assumeTrue("Compliance Operator standard ${standard} should be available", false)
+        }
+
         expect:
-        "compare"
+        "Machine config compliance results are valid"
+        log.info "Getting compliance results for ${standard}"
 
         // We shouldn't have more than two machine config maps as we only have the roles master/worker
         def machineConfigsWithResults = 0
@@ -988,8 +1012,8 @@ class ComplianceTest extends BaseSpecification {
             }
             numErrors += errorsCount(entry.value.controlResultsMap.values())
         }
-        assert numErrors == 0
-        assert machineConfigsWithResults == 2
+        assert numErrors == 0, "Found ${numErrors} errors in compliance results"
+        assert machineConfigsWithResults == 2, "Expected 2 machine configs (master/worker), found ${machineConfigsWithResults}"
 
         where:
         "Data inputs are: "
@@ -1000,54 +1024,80 @@ class ComplianceTest extends BaseSpecification {
     }
 
     @Tag("BAT")
-    @IgnoreIf({ true }) // ROX-12461 The compliance operator tests are not working as expected
+    @Tag("OCPInterop")
     def "Verify Tailored Profile does not have evidence for disabled rule"() {
+        given:
+        "Running on OpenShift 4.x cluster"
         Assume.assumeTrue(ClusterService.isOpenShift4())
 
-        given:
-        "get compliance aggregation results"
-        log.info "Getting compliance results for rhcos4-moderate-modified"
-        ComplianceRunResults run = BASE_RESULTS.get("rhcos4-moderate-modified")
+        and:
+        "Tailored profile standard exists"
+        def standard = "rhcos4-moderate-modified"
+        log.info "Checking if tailored profile standard '${standard}' is available"
+        ComplianceRunResults run = BASE_RESULTS.get(standard)
+
+        // Skip test if the Compliance Operator standard is not available
+        if (run == null) {
+            log.warn "Standard '${standard}' not found in BASE_RESULTS. Available standards: ${BASE_RESULTS.keySet()}"
+            log.warn "Compliance Operator may not be installed or tailored profile not configured. Skipping test."
+            Assume.assumeTrue("Compliance Operator tailored profile ${standard} should be available", false)
+        }
 
         expect:
-        "compare"
+        "Tailored profile excludes disabled rules"
+        log.info "Verifying tailored profile for ${standard}"
 
         // We shouldn't have more than two machine config maps as we only have the roles master/worker
         def machineConfigsWithResults = 0
         def numErrors = 0
+        def disabledRule = "rhcos4-moderate-modified:usbguard-allow-hid-and-hub"
+
         for (def entry in run.machineConfigResultsMap) {
             log.info "Found machine config ${entry.key} with ${entry.value.controlResultsMap.size()} results"
             if (entry.value.controlResultsMap.size()  > 0) {
                 machineConfigsWithResults++
             }
-            assert !entry.value.controlResultsMap.keySet().contains(
-                    "rhcos4-moderate-modified:usbguard-allow-hid-and-hub")
+            assert !entry.value.controlResultsMap.keySet().contains(disabledRule),
+                    "Disabled rule '${disabledRule}' should not be present in tailored profile results"
         }
-        assert numErrors == 0
-        assert machineConfigsWithResults == 2
+        assert numErrors == 0, "Found ${numErrors} errors in compliance results"
+        assert machineConfigsWithResults == 2, "Expected 2 machine configs (master/worker), found ${machineConfigsWithResults}"
     }
 
     @Tag("BAT")
-    @IgnoreIf({ true }) // ROX-12461 The compliance operator tests are not working as expected
+    @Tag("OCPInterop")
     def "Verify Compliance Operator aggregation results on OpenShift for cluster results"() {
+        given:
+        "Running on OpenShift 4.x cluster"
         Assume.assumeTrue(ClusterService.isOpenShift4())
 
-        given:
-        "get compliance aggregation results"
-        log.info "Getting compliance results for ocp4-cis"
-        ComplianceRunResults run = BASE_RESULTS.get("ocp4-cis")
+        and:
+        "Compliance Operator cluster standard exists"
+        def standard = "ocp4-cis"
+        log.info "Checking if standard '${standard}' is available"
+        ComplianceRunResults run = BASE_RESULTS.get(standard)
+
+        // Skip test if the Compliance Operator standard is not available
+        if (run == null) {
+            log.warn "Standard '${standard}' not found in BASE_RESULTS. Available standards: ${BASE_RESULTS.keySet()}"
+            log.warn "Compliance Operator may not be installed or configured on this cluster. Skipping test."
+            Assume.assumeTrue("Compliance Operator standard ${standard} should be available", false)
+        }
 
         expect:
-        "compare"
+        "Cluster-level compliance results are valid"
+        log.info "Verifying cluster compliance results for ${standard}"
 
         def numErrors = 0
-        assert run.clusterResults.controlResultsMap.size() > 0
+        assert run.clusterResults.controlResultsMap.size() > 0,
+                "Expected cluster compliance results but found none"
+
         for (def ctrlResults : run.clusterResults.controlResultsMap.values()) {
             if (ctrlResults.overallState == Compliance.ComplianceState.COMPLIANCE_STATE_ERROR) {
                 numErrors++
             }
         }
-        assert numErrors == 0
+        assert numErrors == 0, "Found ${numErrors} compliance checks in ERROR state"
     }
 
     @Tag("BAT")

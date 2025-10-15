@@ -151,6 +151,7 @@ class DeploymentTest extends BaseSpecification {
 
     @Unroll
     @Tag("BAT")
+    @Tag("OCPInterop")
     def "Verify Openshift orchestrator deployment is marked appropriately"() {
         when:
         assumeTrue(ClusterService.isOpenShift4())

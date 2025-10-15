@@ -410,6 +410,7 @@ class NetworkFlowTest extends BaseSpecification {
     @Tag("BAT")
     @Tag("RUNTIME")
     @Tag("NetworkFlowVisualization")
+    @Tag("OCPInterop")
     def "Verify network graph when filtered on \"#filter\" and scoped to \"#scope\" #desc"() {
         given:
         "Orchestrator components exists"
@@ -452,6 +453,7 @@ class NetworkFlowTest extends BaseSpecification {
 
     @Tag("BAT")
     @Tag("NetworkFlowVisualization")
+    @Tag("OCPInterop")
     def "Verify network flows with graph filtering"() {
         given:
         "Two deployments, A and B, where B communicates to A"

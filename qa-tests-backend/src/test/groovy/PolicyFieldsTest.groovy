@@ -1077,6 +1077,7 @@ class PolicyFieldsTest extends BaseSpecification {
     @SuppressWarnings('LineLength')
     @Unroll
     @Tag("BAT")
+    @Tag("OCPInterop")
     def "Route exposure works as expected - #shouldMatch"() {
         given:
         "Running on an OpenShift 4 cluster"
