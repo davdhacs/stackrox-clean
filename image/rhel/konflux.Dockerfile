@@ -37,7 +37,7 @@ RUN mkdir -p image/rhel/docs/api/v1 && \
 RUN make copy-go-binaries-to-image-dir
 
 
-FROM registry.access.redhat.com/ubi9/nodejs-22@latest AS ui-builder
+FROM registry.redhat.io/ubi9/nodejs-22:9.6-1755075210 AS ui-builder
 
 WORKDIR /go/src/github.com/stackrox/rox/app
 
