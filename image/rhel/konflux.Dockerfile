@@ -74,7 +74,7 @@ RUN make -C ui build
 
 FROM registry.access.redhat.com/ubi9/ubi-minimal:latest@sha256:2ddd6e10383981c7d10e4966a7c0edce7159f8ca91b1691cafabc78bae79d8f8
 
-ARG PG_VERSION
+ARG PG_VERSION=15
 
 RUN microdnf -y module enable postgresql:${PG_VERSION} && \
     # find is used in /stackrox/import-additional-cas \
