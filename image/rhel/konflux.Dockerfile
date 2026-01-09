@@ -3,7 +3,8 @@ ARG PG_VERSION=15
 
 FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_golang_1.25@sha256:8f41beafefbb37e6c260a14cdd0f40c21c59dedb611c8851368243d06da982da AS go-builder
 
-RUN dnf -y install --allowerasing jq
+# jq might already be in the builder image, trying without explicit install
+# RUN dnf -y install --allowerasing jq
 
 WORKDIR /go/src/github.com/stackrox/rox/app
 
