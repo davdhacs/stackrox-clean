@@ -3,8 +3,20 @@ ARG PG_VERSION=15
 
 FROM brew.registry.redhat.io/rh-osbs/openshift-golang-builder:rhel_9_golang_1.25@sha256:8f41beafefbb37e6c260a14cdd0f40c21c59dedb611c8851368243d06da982da AS go-builder
 
-# jq might already be in the builder image, trying without explicit install
-# RUN dnf -y install --allowerasing jq
+# Download static jq binary for the build architecture
+# jq is required by scripts/mergeswag.sh to generate API documentation
+RUN set -ex && \
+    ARCH=$(uname -m) && \
+    case "$ARCH" in \
+        x86_64) JQ_ARCH="amd64" ;; \
+        aarch64) JQ_ARCH="arm64" ;; \
+        ppc64le) JQ_ARCH="ppc64el" ;; \
+        s390x) JQ_ARCH="s390x" ;; \
+        *) echo "Unsupported architecture: $ARCH" && exit 1 ;; \
+    esac && \
+    curl -fsSL "https://github.com/jqlang/jq/releases/download/jq-1.8.1/jq-linux-${JQ_ARCH}" -o /usr/local/bin/jq && \
+    chmod +x /usr/local/bin/jq && \
+    jq --version
 
 WORKDIR /go/src/github.com/stackrox/rox/app
 
