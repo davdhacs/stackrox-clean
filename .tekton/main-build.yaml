@@ -52,7 +52,8 @@ spec:
     value: |
       [
         { "type": "npm", "path": "ui/apps/platform" },
-        { "type": "gomod", "path": "." }
+        { "type": "gomod", "path": "." },
+        { "type": "rpm", "path": "." }
       ]
   - name: build-source-image
     value: 'true'
