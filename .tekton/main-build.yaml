@@ -65,14 +65,6 @@ spec:
     value:
     # X.Y in the cpe label must be adjusted for every version stream.
     - "cpe=cpe:/a:redhat:advanced_cluster_security:X.Y::el8"
-  - name: build-platforms
-    value:
-    # Explicitly override to test if the issue is with defaults propagation vs. the instance type itself.
-    # This matches the pipeline defaults but ensures the value is definitely applied in matrix builds.
-    - linux-d160-m2xlarge/amd64
-    - linux-d160-m2xlarge/arm64
-    - linux/ppc64le
-    - linux/s390x
 
   pipelineRef:
     name: main-pipeline
