@@ -10,8 +10,7 @@ set -euo pipefail
 copy_existing () {
     src=$1
     if [ -d "$src" ] && [ "$(ls -A -I "..*" "$src")" ]; then
-        # TODO(DO NOT MERGE): Is `--update` the correct operation here?
-        cp --verbose --dereference --update \
+        cp --verbose --dereference \
             "$src"/* /etc/pki/ca-trust/source/anchors
     else
         echo "No certificates found in $src"
