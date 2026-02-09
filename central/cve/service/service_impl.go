@@ -13,7 +13,6 @@ import (
 	"github.com/stackrox/rox/pkg/grpc/authz"
 	"github.com/stackrox/rox/pkg/grpc/authz/perrpc"
 	"github.com/stackrox/rox/pkg/grpc/authz/user"
-	"github.com/stackrox/rox/pkg/logging"
 	"github.com/stackrox/rox/pkg/sac/resources"
 	"github.com/stackrox/rox/pkg/set"
 	"google.golang.org/grpc"
@@ -25,7 +24,6 @@ var (
 			v1.CVEService_GetCVEMetadata_FullMethodName,
 		},
 	})
-	log = logging.LoggerForModule()
 )
 
 // serviceImpl provides APIs for CVE metadata.
@@ -77,14 +75,14 @@ func (s *serviceImpl) GetCVEMetadata(ctx context.Context, req *v1.GetCVEMetadata
 
 		// Try to get from node CVE datastore.
 		if nodeCVE, found, err := s.nodeCVEs.Get(ctx, cveID); err == nil && found {
-			if metadata.Severity == storage.VulnerabilitySeverity_UNKNOWN_VULNERABILITY_SEVERITY {
+			if metadata.GetSeverity() == storage.VulnerabilitySeverity_UNKNOWN_VULNERABILITY_SEVERITY {
 				metadata.Severity = nodeCVE.GetSeverity()
 			}
 			if nodeCVE.GetCveBaseInfo() != nil {
-				if metadata.Summary == "" {
+				if metadata.GetSummary() == "" {
 					metadata.Summary = nodeCVE.GetCveBaseInfo().GetSummary()
 				}
-				if metadata.Link == "" {
+				if metadata.GetLink() == "" {
 					metadata.Link = nodeCVE.GetCveBaseInfo().GetLink()
 				}
 
@@ -97,14 +95,14 @@ func (s *serviceImpl) GetCVEMetadata(ctx context.Context, req *v1.GetCVEMetadata
 
 		// Try to get from cluster CVE datastore (covers K8S and Istio).
 		if clusterCVE, found, err := s.clusterCVEs.Get(ctx, cveID); err == nil && found {
-			if metadata.Severity == storage.VulnerabilitySeverity_UNKNOWN_VULNERABILITY_SEVERITY {
+			if metadata.GetSeverity() == storage.VulnerabilitySeverity_UNKNOWN_VULNERABILITY_SEVERITY {
 				metadata.Severity = clusterCVE.GetSeverity()
 			}
 			if clusterCVE.GetCveBaseInfo() != nil {
-				if metadata.Summary == "" {
+				if metadata.GetSummary() == "" {
 					metadata.Summary = clusterCVE.GetCveBaseInfo().GetSummary()
 				}
-				if metadata.Link == "" {
+				if metadata.GetLink() == "" {
 					metadata.Link = clusterCVE.GetCveBaseInfo().GetLink()
 				}
 
