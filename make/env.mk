@@ -47,6 +47,15 @@ endif
 TAG := # make sure tag is never injectable as an env var
 RELEASE_GOTAGS := release
 
+# In CI, force pure Go net and os/user implementations so that GOCACHE
+# entries are identical regardless of CGO_ENABLED. This allows the CI build
+# cache to be shared between CGO=1 (main binaries) and CGO=0 (CLI,
+# cross-compiled) builds. Not applied outside CI to avoid changing DNS
+# resolver behavior in Konflux/release builds.
+ifdef CI
+GOTAGS := $(if $(GOTAGS),$(GOTAGS)$(comma))netgo$(comma)osusergo
+endif
+
 # Use a release go -tag when CI is targeting a tag
 ifdef CI
 ifneq ($(BUILD_TAG),)

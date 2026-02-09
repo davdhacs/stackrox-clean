@@ -7,6 +7,8 @@ run:
     - scanner_db_integration
     - sql_integration
     - test_e2e
+    - netgo
+    - osusergo
   modules-download-mode: readonly
 output:
   formats:
