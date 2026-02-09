@@ -104,6 +104,11 @@ jobs:
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
 
+    - name: GOCACHE probe (pre-build)
+      if: matrix.name == 'default' && matrix.goarch == 'amd64'
+      run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
+
     - uses: ./.github/actions/handle-tagged-build
 
     - name: Setup Go build environment for release
@@ -126,6 +131,7 @@ jobs:
 
     - name: Build Go binary
       run: |
+        start=$(date +%s)
         if [[ "${{ matrix.goarch }}" != "amd64" ]]; then
           echo "Building non-amd binary (CGO_ENABLED=0)"
           make -C scanner CGO_ENABLED=0 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} image/scanner/bin/scanner
@@ -133,6 +139,13 @@ jobs:
           echo "Building amd binary (CGO_ENABLED=1)"
           make -C scanner CGO_ENABLED=1 GOOS=${{ matrix.goos }} GOARCH=${{ matrix.goarch }} image/scanner/bin/scanner
         fi
+        end=$(date +%s)
+        echo "::notice::Scanner build (${{ matrix.name }}/${{ matrix.goarch }}) took $((end - start))s"
+
+    - name: GOCACHE probe (post-build)
+      if: matrix.name == 'default' && matrix.goarch == 'amd64'
+      run: ./.github/scripts/gocache-probe.sh post
+      continue-on-error: true
 
     - name: Archive Go binary to preserve permissions
       run: tar -cvzf go-binary.tgz scanner/image/scanner/bin/scanner

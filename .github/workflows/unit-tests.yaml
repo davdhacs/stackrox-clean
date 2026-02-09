@@ -42,9 +42,21 @@ jobs:
 
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
+      with:
+        save: 'false'
+        cache-group: pre-build-go-binaries
+
+    - name: GOCACHE probe
+      if: matrix.gotags == 'GOTAGS=""'
+      run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
 
     - name: Go Unit Tests
-      run: ${{ matrix.gotags }} make go-unit-tests
+      run: |
+        start=$(date +%s)
+        ${{ matrix.gotags }} make go-unit-tests
+        end=$(date +%s)
+        echo "::notice::Go unit tests (${{ matrix.gotags }}) took $((end - start))s"
 
     - uses: codecov/codecov-action@v3
       with:
@@ -122,12 +134,24 @@ jobs:
 
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
+      with:
+        save: 'false'
+        cache-group: pre-build-go-binaries
+
+    - name: GOCACHE probe
+      if: matrix.gotags == 'GOTAGS=""' && matrix.pg == '15'
+      run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
 
     - name: Is Postgres ready
       run: pg_isready -h 127.0.0.1
 
     - name: Go Unit Tests
-      run: ${{ matrix.gotags }} make go-postgres-unit-tests
+      run: |
+        start=$(date +%s)
+        ${{ matrix.gotags }} make go-postgres-unit-tests
+        end=$(date +%s)
+        echo "::notice::Go postgres unit tests (${{ matrix.gotags }}, pg${{ matrix.pg }}) took $((end - start))s"
 
     - uses: codecov/codecov-action@v3
       with:
@@ -182,6 +206,13 @@ jobs:
 
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
+      with:
+        save: 'false'
+        cache-group: pre-build-go-binaries
+
+    - name: GOCACHE probe
+      run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
 
     - name: Is Postgres ready
       run: pg_isready -h 127.0.0.1
@@ -303,6 +334,13 @@ jobs:
 
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
+      with:
+        save: 'false'
+        cache-group: pre-build-go-binaries
+
+    - name: GOCACHE probe
+      run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
 
     - uses: ./.github/actions/handle-tagged-build
 
@@ -395,6 +433,7 @@ jobs:
       uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
+        cache: false
 
     - uses: ./.github/actions/job-preamble
       with:
@@ -402,6 +441,13 @@ jobs:
 
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
+      with:
+        save: 'false'
+        cache-group: pre-build-go-binaries
+
+    - name: GOCACHE probe
+      run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
 
     - name: Create k8s Kind Cluster
       uses: helm/kind-action@v1

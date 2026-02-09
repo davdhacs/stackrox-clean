@@ -41,6 +41,13 @@ jobs:
 
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
+      with:
+        save: 'false'
+        cache-group: pre-build-go-binaries
+
+    - name: GOCACHE probe
+      run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
 
     - name: Check Generated
       run: scripts/ci/jobs/check-generated.sh
@@ -109,6 +116,13 @@ jobs:
 
       - name: Cache Go dependencies
         uses: ./.github/actions/cache-go-dependencies
+        with:
+          save: 'false'
+          cache-group: pre-build-go-binaries
+
+      - name: GOCACHE probe
+        run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
 
       - name: Cache UI dependencies
         uses: ./.github/actions/cache-ui-dependencies
@@ -136,21 +150,17 @@ jobs:
     - uses: actions/setup-go@v6
       with:
         go-version-file: 'tools/linters/go.mod'
+        cache: false
 
-    - name: Check Cache golangci-lint
-      run: make golangci-lint-cache-status
-
-    - name: Cache golangci-lint
-      uses: actions/cache@v5
+    - name: Cache Go dependencies
+      uses: ./.github/actions/cache-go-dependencies
       with:
-        path: /github/home/.cache/golangci-lint
-        key: go-lint-v2-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          go-lint-v2-${{ hashFiles('**/go.sum') }}
-          go-lint-v2-
+        save: 'false'
+        cache-group: pre-build-go-binaries
 
-    - name: Check cache golangci-lint
-      run: make golangci-lint-cache-status
+    - name: GOCACHE probe
+      run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
 
     - name: Check Go version is in sync in .golangci.yml and go.mod
       run: |
@@ -159,8 +169,9 @@ jobs:
     - name: make golangci-lint
       run: make golangci-lint
 
-    - name: Check Cache golangci-lint
-      run: make golangci-lint-cache-status
+    - name: GOCACHE probe (post-build)
+      run: ./.github/scripts/gocache-probe.sh post
+      continue-on-error: true
 
   check-dependent-images-exist:
     # This job ensures that COLLECTOR_VERSION, FACT_VERSION or SCANNER_VERSION files cannot be updated to a version

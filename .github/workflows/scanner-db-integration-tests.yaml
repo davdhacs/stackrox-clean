@@ -35,6 +35,13 @@ jobs:
 
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
+      with:
+        save: 'false'
+        cache-group: pre-build-go-binaries
+
+    - name: GOCACHE probe
+      run: ./.github/scripts/gocache-probe.sh pre
+      continue-on-error: true
 
     - name: Is Postgres ready
       run: pg_isready -h 127.0.0.1

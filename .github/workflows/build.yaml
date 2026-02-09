@@ -188,7 +188,7 @@ jobs:
           GOARCH: ${{ matrix.target_arch }}
         uses: ./.github/actions/cache-go-dependencies
         with:
-          save: 'true'
+          save: 'false'
           cache-group: ${{ matrix.cache_group }}
 
       - name: GOCACHE probe (pre-build)
@@ -366,7 +366,7 @@ jobs:
       - name: Cache Go dependencies
         uses: ./.github/actions/cache-go-dependencies
         with:
-          save: 'true'
+          save: 'false'
           cache-group: pre-build-go-binaries
 
       - name: GOCACHE probe
@@ -729,7 +729,7 @@ jobs:
           GOARCH: ${{ matrix.arch }}
         uses: ./.github/actions/cache-go-dependencies
         with:
-          save: 'true'
+          save: 'false'
           cache-group: pre-build-go-binaries
 
       - name: GOCACHE probe
