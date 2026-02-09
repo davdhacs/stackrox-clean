@@ -183,84 +183,13 @@ func (s *serviceImpl) ImageVulnerabilities(ctx context.Context, _ *v1.Empty) (*v
 	images := make(map[string]*v1.ImageVulnerabilitiesResponse_Image)
 
 	err = s.images.WalkByQuery(txCtx, search.EmptyQuery(), func(img *storage.Image) error {
-		scan := img.GetScan()
-		if scan == nil {
-			return nil
-		}
-
-		components := scan.GetComponents()
-		if len(components) == 0 {
-			return nil
-		}
-
-		metadata := img.GetMetadata()
-		if metadata == nil {
-			return nil
-		}
-
-		layerShas := metadata.GetLayerShas()
-
-		var responseComponents []*v1.ImageVulnerabilitiesResponse_Image_Component
-
-		for _, comp := range components {
-			vulns := comp.GetVulns()
-			if len(vulns) == 0 {
-				continue
-			}
-
-			responseVulns := make([]*v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability, 0, len(vulns))
-			for _, vuln := range vulns {
-				if vuln.GetCve() != "" {
-					vulnerability := &v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability{
-						Id:                    vuln.GetCve(),
-						FirstSystemOccurrence: vuln.GetFirstSystemOccurrence(),
-						FirstImageOccurrence:  vuln.GetFirstImageOccurrence(),
-					}
-					if vuln.GetSuppressed() {
-						vulnerability.Suppression = &v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression{
-							SuppressActivation: vuln.GetSuppressActivation(),
-							SuppressExpiry:     vuln.GetSuppressExpiry(),
-						}
-					}
-					responseVulns = append(responseVulns, vulnerability)
-				}
-			}
-
-			if len(responseVulns) == 0 {
-				continue
-			}
-
-			var layerSha string
-			if li, ok := comp.GetHasLayerIndex().(*storage.EmbeddedImageScanComponent_LayerIndex); ok {
-				layerIndex := li.LayerIndex
-				if int(layerIndex) < len(layerShas) {
-					layerSha = layerShas[layerIndex]
-				}
-			}
-
-			responseComponents = append(responseComponents, &v1.ImageVulnerabilitiesResponse_Image_Component{
-				Name:            comp.GetName(),
-				Version:         comp.GetVersion(),
-				LayerSha:        layerSha,
-				Location:        comp.GetLocation(),
-				Vulnerabilities: responseVulns,
-			})
-		}
-
-		if len(responseComponents) == 0 {
-			return nil
-		}
-
-		workloadIDs, err := s.getImageWorkloadIDs(txCtx, img.GetId())
+		responseImage, err := s.transformImageToResponse(txCtx, img)
 		if err != nil {
-			return errors.Wrapf(err, "failed to get workload IDs for image %s", img.GetId())
+			return err
 		}
-
-		images[img.GetId()] = &v1.ImageVulnerabilitiesResponse_Image{
-			Components:  responseComponents,
-			WorkloadIds: workloadIDs,
+		if responseImage != nil {
+			images[img.GetId()] = responseImage
 		}
-
 		return nil
 	})
 
@@ -274,6 +203,109 @@ func (s *serviceImpl) ImageVulnerabilities(ctx context.Context, _ *v1.Empty) (*v
 	committed = true
 
 	return &v1.ImageVulnerabilitiesResponse{Images: images}, nil
+}
+
+// transformImageToResponse converts a storage.Image to the response format.
+// Returns nil if the image has no vulnerabilities to report.
+func (s *serviceImpl) transformImageToResponse(ctx context.Context, img *storage.Image) (*v1.ImageVulnerabilitiesResponse_Image, error) {
+	scan := img.GetScan()
+	if scan == nil {
+		return nil, nil
+	}
+
+	components := scan.GetComponents()
+	if len(components) == 0 {
+		return nil, nil
+	}
+
+	metadata := img.GetMetadata()
+	if metadata == nil {
+		return nil, nil
+	}
+
+	layerShas := metadata.GetLayerShas()
+	responseComponents := make([]*v1.ImageVulnerabilitiesResponse_Image_Component, 0, len(components))
+
+	for _, comp := range components {
+		if responseComp := transformComponentToResponse(comp, layerShas); responseComp != nil {
+			responseComponents = append(responseComponents, responseComp)
+		}
+	}
+
+	if len(responseComponents) == 0 {
+		return nil, nil
+	}
+
+	workloadIDs, err := s.getImageWorkloadIDs(ctx, img.GetId())
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get workload IDs for image %s", img.GetId())
+	}
+
+	return &v1.ImageVulnerabilitiesResponse_Image{
+		Components:  responseComponents,
+		WorkloadIds: workloadIDs,
+	}, nil
+}
+
+// transformComponentToResponse converts a storage.EmbeddedImageScanComponent to
+// the response format.
+// Returns nil if the component has no vulnerabilities to report.
+func transformComponentToResponse(comp *storage.EmbeddedImageScanComponent, layerShas []string) *v1.ImageVulnerabilitiesResponse_Image_Component {
+	vulns := comp.GetVulns()
+	if len(vulns) == 0 {
+		return nil
+	}
+
+	responseVulns := make([]*v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability, 0, len(vulns))
+	for _, vuln := range vulns {
+		if responseVuln := transformVulnerabilityToResponse(vuln); responseVuln != nil {
+			responseVulns = append(responseVulns, responseVuln)
+		}
+	}
+
+	if len(responseVulns) == 0 {
+		return nil
+	}
+
+	return &v1.ImageVulnerabilitiesResponse_Image_Component{
+		Name:            comp.GetName(),
+		Version:         comp.GetVersion(),
+		LayerSha:        extractLayerSha(comp, layerShas),
+		Location:        comp.GetLocation(),
+		Vulnerabilities: responseVulns,
+	}
+}
+
+// transformVulnerabilityToResponse converts a storage.EmbeddedVulnerability to
+// the response format.
+// Returns nil if the vulnerability has no CVE ID.
+func transformVulnerabilityToResponse(vuln *storage.EmbeddedVulnerability) *v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability {
+	if vuln.GetCve() == "" {
+		return nil
+	}
+
+	vulnerability := &v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability{
+		Id:                    vuln.GetCve(),
+		FirstSystemOccurrence: vuln.GetFirstSystemOccurrence(),
+		FirstImageOccurrence:  vuln.GetFirstImageOccurrence(),
+	}
+
+	if vuln.GetSuppressed() {
+		vulnerability.Suppression = &v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression{
+			SuppressActivation: vuln.GetSuppressActivation(),
+			SuppressExpiry:     vuln.GetSuppressExpiry(),
+		}
+	}
+
+	return vulnerability
+}
+
+// extractLayerSha extracts the layer SHA from a component's layer index.
+func extractLayerSha(comp *storage.EmbeddedImageScanComponent, layerShas []string) string {
+	if layerIndex := comp.GetLayerIndex(); comp.GetHasLayerIndex() != nil && int(layerIndex) < len(layerShas) {
+		return layerShas[layerIndex]
+	}
+	return ""
 }
 
 func (s *serviceImpl) getImageWorkloadIDs(ctx context.Context, imageID string) ([]string, error) {
