@@ -211,14 +211,18 @@ func (s *serviceImpl) ImageVulnerabilities(ctx context.Context, _ *v1.Empty) (*v
 			responseVulns := make([]*v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability, 0, len(vulns))
 			for _, vuln := range vulns {
 				if vuln.GetCve() != "" {
-					responseVulns = append(responseVulns, &v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability{
+					vulnerability := &v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability{
 						Id:                    vuln.GetCve(),
-						Suppressed:            vuln.GetSuppressed(),
-						SuppressActivation:    vuln.GetSuppressActivation(),
-						SuppressExpiry:        vuln.GetSuppressExpiry(),
 						FirstSystemOccurrence: vuln.GetFirstSystemOccurrence(),
 						FirstImageOccurrence:  vuln.GetFirstImageOccurrence(),
-					})
+					}
+					if vuln.GetSuppressed() {
+						vulnerability.Suppression = &v1.ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression{
+							SuppressActivation: vuln.GetSuppressActivation(),
+							SuppressExpiry:     vuln.GetSuppressExpiry(),
+						}
+					}
+					responseVulns = append(responseVulns, vulnerability)
 				}
 			}
 
