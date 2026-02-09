@@ -111,6 +111,7 @@ export type ImagePageProps = {
     deploymentResourceColumnOverrides: ColumnConfigOverrides<
         keyof typeof deploymentResourcesDefaultColumns
     >;
+    isBaseImageDetectionEnabled: boolean;
 };
 
 type ImageData = {
@@ -127,6 +128,7 @@ function ImagePage({
     vulnerabilityState,
     showVulnerabilityStateTabs,
     deploymentResourceColumnOverrides,
+    isBaseImageDetectionEnabled,
 }: ImagePageProps) {
     const { isFeatureFlagEnabled } = useFeatureFlags();
     const isNewImageDataModelEnabled = isFeatureFlagEnabled('ROX_FLATTEN_IMAGE_DATA');
@@ -334,6 +336,7 @@ function ImagePage({
                                         <CreateReportDropdown onSelect={onReportSelect} />
                                     )
                                 }
+                                isBaseImageDetectionEnabled={isBaseImageDetectionEnabled}
                             />
                         </Tab>
                         <Tab

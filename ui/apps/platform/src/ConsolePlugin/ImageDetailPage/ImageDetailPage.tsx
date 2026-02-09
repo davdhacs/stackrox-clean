@@ -28,6 +28,9 @@ export function ImageDetailPage() {
                     cluster: hideColumnIf(true),
                     namespace: hideColumnIf(activeNamespace !== ALL_NAMESPACES_KEY),
                 }}
+                // Base image links do not work correctly in the console plugin for Tech Preview due to
+                // the way namespace permission checks are handled, so we disable it for now.
+                isBaseImageDetectionEnabled={false}
             />
         </WorkloadCveViewContext.Provider>
     );

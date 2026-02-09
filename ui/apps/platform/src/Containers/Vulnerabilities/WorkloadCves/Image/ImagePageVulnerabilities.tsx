@@ -137,6 +137,7 @@ export type ImagePageVulnerabilitiesProps = {
     additionalToolbarItems?: ReactNode;
     searchFilter: SearchFilter;
     setSearchFilter: (filter: SearchFilter) => void;
+    isBaseImageDetectionEnabled: boolean;
 };
 
 function ImagePageVulnerabilities({
@@ -150,9 +151,9 @@ function ImagePageVulnerabilities({
     additionalToolbarItems,
     searchFilter,
     setSearchFilter,
+    isBaseImageDetectionEnabled,
 }: ImagePageVulnerabilitiesProps) {
     const { isFeatureFlagEnabled } = useFeatureFlags();
-    const isBaseImageDetectionEnabled = isFeatureFlagEnabled('ROX_BASE_IMAGE_DETECTION');
     const isNewImageDataModelEnabled = isFeatureFlagEnabled('ROX_FLATTEN_IMAGE_DATA');
 
     const { analyticsTrack } = useAnalytics();
