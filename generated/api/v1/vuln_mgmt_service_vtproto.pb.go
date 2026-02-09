@@ -5,6 +5,7 @@
 package v1
 
 import (
+	binary "encoding/binary"
 	fmt "fmt"
 	protohelpers "github.com/planetscale/vtprotobuf/protohelpers"
 	timestamppb1 "github.com/planetscale/vtprotobuf/types/known/timestamppb"
@@ -13,6 +14,7 @@ import (
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
 	io "io"
+	math "math"
 	unsafe "unsafe"
 )
 
@@ -76,17 +78,41 @@ func (m *VulnMgmtExportWorkloadsResponse) CloneMessageVT() proto.Message {
 	return m.CloneVT()
 }
 
+func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) CloneVT() *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression {
+	if m == nil {
+		return (*ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression)(nil)
+	}
+	r := new(ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression)
+	r.SuppressActivation = (*timestamppb.Timestamp)((*timestamppb1.Timestamp)(m.SuppressActivation).CloneVT())
+	r.SuppressExpiry = (*timestamppb.Timestamp)((*timestamppb1.Timestamp)(m.SuppressExpiry).CloneVT())
+	if len(m.unknownFields) > 0 {
+		r.unknownFields = make([]byte, len(m.unknownFields))
+		copy(r.unknownFields, m.unknownFields)
+	}
+	return r
+}
+
+func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) CloneMessageVT() proto.Message {
+	return m.CloneVT()
+}
+
 func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) CloneVT() *ImageVulnerabilitiesResponse_Image_Component_Vulnerability {
 	if m == nil {
 		return (*ImageVulnerabilitiesResponse_Image_Component_Vulnerability)(nil)
 	}
 	r := new(ImageVulnerabilitiesResponse_Image_Component_Vulnerability)
 	r.Id = m.Id
-	r.Suppressed = m.Suppressed
-	r.SuppressActivation = (*timestamppb.Timestamp)((*timestamppb1.Timestamp)(m.SuppressActivation).CloneVT())
-	r.SuppressExpiry = (*timestamppb.Timestamp)((*timestamppb1.Timestamp)(m.SuppressExpiry).CloneVT())
+	r.Cvss = m.Cvss
+	r.Severity = m.Severity
+	r.State = m.State
 	r.FirstSystemOccurrence = (*timestamppb.Timestamp)((*timestamppb1.Timestamp)(m.FirstSystemOccurrence).CloneVT())
 	r.FirstImageOccurrence = (*timestamppb.Timestamp)((*timestamppb1.Timestamp)(m.FirstImageOccurrence).CloneVT())
+	r.Suppression = m.Suppression.CloneVT()
+	if rhs := m.Source; rhs != nil {
+		tmpContainer := make([]storage.Source, len(rhs))
+		copy(tmpContainer, rhs)
+		r.Source = tmpContainer
+	}
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -247,6 +273,28 @@ func (this *VulnMgmtExportWorkloadsResponse) EqualMessageVT(thatMsg proto.Messag
 	}
 	return this.EqualVT(that)
 }
+func (this *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) EqualVT(that *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) bool {
+	if this == that {
+		return true
+	} else if this == nil || that == nil {
+		return false
+	}
+	if !(*timestamppb1.Timestamp)(this.SuppressActivation).EqualVT((*timestamppb1.Timestamp)(that.SuppressActivation)) {
+		return false
+	}
+	if !(*timestamppb1.Timestamp)(this.SuppressExpiry).EqualVT((*timestamppb1.Timestamp)(that.SuppressExpiry)) {
+		return false
+	}
+	return string(this.unknownFields) == string(that.unknownFields)
+}
+
+func (this *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) EqualMessageVT(thatMsg proto.Message) bool {
+	that, ok := thatMsg.(*ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression)
+	if !ok {
+		return false
+	}
+	return this.EqualVT(that)
+}
 func (this *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) EqualVT(that *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) bool {
 	if this == that {
 		return true
@@ -256,19 +304,31 @@ func (this *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) EqualVT(
 	if this.Id != that.Id {
 		return false
 	}
-	if this.Suppressed != that.Suppressed {
+	if this.Cvss != that.Cvss {
 		return false
 	}
-	if !(*timestamppb1.Timestamp)(this.SuppressActivation).EqualVT((*timestamppb1.Timestamp)(that.SuppressActivation)) {
+	if this.Severity != that.Severity {
 		return false
 	}
-	if !(*timestamppb1.Timestamp)(this.SuppressExpiry).EqualVT((*timestamppb1.Timestamp)(that.SuppressExpiry)) {
+	if this.State != that.State {
 		return false
+	}
+	if len(this.Source) != len(that.Source) {
+		return false
+	}
+	for i, vx := range this.Source {
+		vy := that.Source[i]
+		if vx != vy {
+			return false
+		}
 	}
 	if !(*timestamppb1.Timestamp)(this.FirstSystemOccurrence).EqualVT((*timestamppb1.Timestamp)(that.FirstSystemOccurrence)) {
 		return false
 	}
 	if !(*timestamppb1.Timestamp)(this.FirstImageOccurrence).EqualVT((*timestamppb1.Timestamp)(that.FirstImageOccurrence)) {
+		return false
+	}
+	if !this.Suppression.EqualVT(that.Suppression) {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -533,6 +593,59 @@ func (m *VulnMgmtExportWorkloadsResponse) MarshalToSizedBufferVT(dAtA []byte) (i
 	return len(dAtA) - i, nil
 }
 
+func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) MarshalVT() (dAtA []byte, err error) {
+	if m == nil {
+		return nil, nil
+	}
+	size := m.SizeVT()
+	dAtA = make([]byte, size)
+	n, err := m.MarshalToSizedBufferVT(dAtA[:size])
+	if err != nil {
+		return nil, err
+	}
+	return dAtA[:n], nil
+}
+
+func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) MarshalToVT(dAtA []byte) (int, error) {
+	size := m.SizeVT()
+	return m.MarshalToSizedBufferVT(dAtA[:size])
+}
+
+func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+	if m == nil {
+		return 0, nil
+	}
+	i := len(dAtA)
+	_ = i
+	var l int
+	_ = l
+	if m.unknownFields != nil {
+		i -= len(m.unknownFields)
+		copy(dAtA[i:], m.unknownFields)
+	}
+	if m.SuppressExpiry != nil {
+		size, err := (*timestamppb1.Timestamp)(m.SuppressExpiry).MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x12
+	}
+	if m.SuppressActivation != nil {
+		size, err := (*timestamppb1.Timestamp)(m.SuppressActivation).MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0xa
+	}
+	return len(dAtA) - i, nil
+}
+
 func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
@@ -563,6 +676,16 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) MarshalToSi
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.Suppression != nil {
+		size, err := m.Suppression.MarshalToSizedBufferVT(dAtA[:i])
+		if err != nil {
+			return 0, err
+		}
+		i -= size
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+		i--
+		dAtA[i] = 0x42
+	}
 	if m.FirstImageOccurrence != nil {
 		size, err := (*timestamppb1.Timestamp)(m.FirstImageOccurrence).MarshalToSizedBufferVT(dAtA[:i])
 		if err != nil {
@@ -571,7 +694,7 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) MarshalToSi
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 		i--
-		dAtA[i] = 0x32
+		dAtA[i] = 0x3a
 	}
 	if m.FirstSystemOccurrence != nil {
 		size, err := (*timestamppb1.Timestamp)(m.FirstSystemOccurrence).MarshalToSizedBufferVT(dAtA[:i])
@@ -581,37 +704,44 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) MarshalToSi
 		i -= size
 		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
 		i--
+		dAtA[i] = 0x32
+	}
+	if len(m.Source) > 0 {
+		var pksize2 int
+		for _, num := range m.Source {
+			pksize2 += protohelpers.SizeOfVarint(uint64(num))
+		}
+		i -= pksize2
+		j1 := i
+		for _, num1 := range m.Source {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j1++
+			}
+			dAtA[j1] = uint8(num)
+			j1++
+		}
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(pksize2))
+		i--
 		dAtA[i] = 0x2a
 	}
-	if m.SuppressExpiry != nil {
-		size, err := (*timestamppb1.Timestamp)(m.SuppressExpiry).MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+	if m.State != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.State))
 		i--
-		dAtA[i] = 0x22
+		dAtA[i] = 0x20
 	}
-	if m.SuppressActivation != nil {
-		size, err := (*timestamppb1.Timestamp)(m.SuppressActivation).MarshalToSizedBufferVT(dAtA[:i])
-		if err != nil {
-			return 0, err
-		}
-		i -= size
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(size))
+	if m.Severity != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.Severity))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x18
 	}
-	if m.Suppressed {
+	if m.Cvss != 0 {
+		i -= 4
+		binary.LittleEndian.PutUint32(dAtA[i:], uint32(math.Float32bits(float32(m.Cvss))))
 		i--
-		if m.Suppressed {
-			dAtA[i] = 1
-		} else {
-			dAtA[i] = 0
-		}
-		i--
-		dAtA[i] = 0x10
+		dAtA[i] = 0x15
 	}
 	if len(m.Id) > 0 {
 		i -= len(m.Id)
@@ -857,6 +987,24 @@ func (m *VulnMgmtExportWorkloadsResponse) SizeVT() (n int) {
 	return n
 }
 
+func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) SizeVT() (n int) {
+	if m == nil {
+		return 0
+	}
+	var l int
+	_ = l
+	if m.SuppressActivation != nil {
+		l = (*timestamppb1.Timestamp)(m.SuppressActivation).SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.SuppressExpiry != nil {
+		l = (*timestamppb1.Timestamp)(m.SuppressExpiry).SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	n += len(m.unknownFields)
+	return n
+}
+
 func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) SizeVT() (n int) {
 	if m == nil {
 		return 0
@@ -867,16 +1015,21 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) SizeVT() (n
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	if m.Suppressed {
-		n += 2
+	if m.Cvss != 0 {
+		n += 5
 	}
-	if m.SuppressActivation != nil {
-		l = (*timestamppb1.Timestamp)(m.SuppressActivation).SizeVT()
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	if m.Severity != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.Severity))
 	}
-	if m.SuppressExpiry != nil {
-		l = (*timestamppb1.Timestamp)(m.SuppressExpiry).SizeVT()
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	if m.State != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.State))
+	}
+	if len(m.Source) > 0 {
+		l = 0
+		for _, e := range m.Source {
+			l += protohelpers.SizeOfVarint(uint64(e))
+		}
+		n += 1 + protohelpers.SizeOfVarint(uint64(l)) + l
 	}
 	if m.FirstSystemOccurrence != nil {
 		l = (*timestamppb1.Timestamp)(m.FirstSystemOccurrence).SizeVT()
@@ -884,6 +1037,10 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) SizeVT() (n
 	}
 	if m.FirstImageOccurrence != nil {
 		l = (*timestamppb1.Timestamp)(m.FirstImageOccurrence).SizeVT()
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.Suppression != nil {
+		l = m.Suppression.SizeVT()
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
@@ -1225,6 +1382,129 @@ func (m *VulnMgmtExportWorkloadsResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) UnmarshalVT(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SuppressActivation", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.SuppressActivation == nil {
+				m.SuppressActivation = &timestamppb.Timestamp{}
+			}
+			if err := (*timestamppb1.Timestamp)(m.SuppressActivation).UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SuppressExpiry", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.SuppressExpiry == nil {
+				m.SuppressExpiry = &timestamppb.Timestamp{}
+			}
+			if err := (*timestamppb1.Timestamp)(m.SuppressExpiry).UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -1287,30 +1567,21 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 			m.Id = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Suppressed", wireType)
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Cvss", wireType)
 			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
+			var v uint32
+			if (iNdEx + 4) > l {
+				return io.ErrUnexpectedEOF
 			}
-			m.Suppressed = bool(v != 0)
+			v = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
+			iNdEx += 4
+			m.Cvss = float32(math.Float32frombits(v))
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SuppressActivation", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Severity", wireType)
 			}
-			var msglen int
+			m.Severity = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -1320,33 +1591,16 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.Severity |= storage.VulnerabilitySeverity(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.SuppressActivation == nil {
-				m.SuppressActivation = &timestamppb.Timestamp{}
-			}
-			if err := (*timestamppb1.Timestamp)(m.SuppressActivation).UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SuppressExpiry", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
 			}
-			var msglen int
+			m.State = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -1356,29 +1610,81 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.State |= storage.VulnerabilityState(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.SuppressExpiry == nil {
-				m.SuppressExpiry = &timestamppb.Timestamp{}
-			}
-			if err := (*timestamppb1.Timestamp)(m.SuppressExpiry).UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		case 5:
+			if wireType == 0 {
+				var v storage.Source
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= storage.Source(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Source = append(m.Source, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				if elementCount != 0 && len(m.Source) == 0 {
+					m.Source = make([]storage.Source, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v storage.Source
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return protohelpers.ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= storage.Source(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Source = append(m.Source, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
+			}
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FirstSystemOccurrence", wireType)
 			}
@@ -1414,7 +1720,7 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FirstImageOccurrence", wireType)
 			}
@@ -1447,6 +1753,42 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 				m.FirstImageOccurrence = &timestamppb.Timestamp{}
 			}
 			if err := (*timestamppb1.Timestamp)(m.FirstImageOccurrence).UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Suppression", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Suppression == nil {
+				m.Suppression = &ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression{}
+			}
+			if err := m.Suppression.UnmarshalVT(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex
@@ -2244,6 +2586,129 @@ func (m *VulnMgmtExportWorkloadsResponse) UnmarshalVTUnsafe(dAtA []byte) error {
 	}
 	return nil
 }
+func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) UnmarshalVTUnsafe(dAtA []byte) error {
+	l := len(dAtA)
+	iNdEx := 0
+	for iNdEx < l {
+		preIndex := iNdEx
+		var wire uint64
+		for shift := uint(0); ; shift += 7 {
+			if shift >= 64 {
+				return protohelpers.ErrIntOverflow
+			}
+			if iNdEx >= l {
+				return io.ErrUnexpectedEOF
+			}
+			b := dAtA[iNdEx]
+			iNdEx++
+			wire |= uint64(b&0x7F) << shift
+			if b < 0x80 {
+				break
+			}
+		}
+		fieldNum := int32(wire >> 3)
+		wireType := int(wire & 0x7)
+		if wireType == 4 {
+			return fmt.Errorf("proto: ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression: wiretype end group for non-group")
+		}
+		if fieldNum <= 0 {
+			return fmt.Errorf("proto: ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression: illegal tag %d (wire type %d)", fieldNum, wire)
+		}
+		switch fieldNum {
+		case 1:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SuppressActivation", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.SuppressActivation == nil {
+				m.SuppressActivation = &timestamppb.Timestamp{}
+			}
+			if err := (*timestamppb1.Timestamp)(m.SuppressActivation).UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 2:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field SuppressExpiry", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.SuppressExpiry == nil {
+				m.SuppressExpiry = &timestamppb.Timestamp{}
+			}
+			if err := (*timestamppb1.Timestamp)(m.SuppressExpiry).UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		default:
+			iNdEx = preIndex
+			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
+			if err != nil {
+				return err
+			}
+			if (skippy < 0) || (iNdEx+skippy) < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if (iNdEx + skippy) > l {
+				return io.ErrUnexpectedEOF
+			}
+			m.unknownFields = append(m.unknownFields, dAtA[iNdEx:iNdEx+skippy]...)
+			iNdEx += skippy
+		}
+	}
+
+	if iNdEx > l {
+		return io.ErrUnexpectedEOF
+	}
+	return nil
+}
 func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVTUnsafe(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
@@ -2310,30 +2775,21 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 			m.Id = stringValue
 			iNdEx = postIndex
 		case 2:
-			if wireType != 0 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Suppressed", wireType)
+			if wireType != 5 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Cvss", wireType)
 			}
-			var v int
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
-				}
-				if iNdEx >= l {
-					return io.ErrUnexpectedEOF
-				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				v |= int(b&0x7F) << shift
-				if b < 0x80 {
-					break
-				}
+			var v uint32
+			if (iNdEx + 4) > l {
+				return io.ErrUnexpectedEOF
 			}
-			m.Suppressed = bool(v != 0)
+			v = uint32(binary.LittleEndian.Uint32(dAtA[iNdEx:]))
+			iNdEx += 4
+			m.Cvss = float32(math.Float32frombits(v))
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SuppressActivation", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Severity", wireType)
 			}
-			var msglen int
+			m.Severity = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -2343,33 +2799,16 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.Severity |= storage.VulnerabilitySeverity(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.SuppressActivation == nil {
-				m.SuppressActivation = &timestamppb.Timestamp{}
-			}
-			if err := (*timestamppb1.Timestamp)(m.SuppressActivation).UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		case 4:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field SuppressExpiry", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field State", wireType)
 			}
-			var msglen int
+			m.State = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -2379,29 +2818,81 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				msglen |= int(b&0x7F) << shift
+				m.State |= storage.VulnerabilityState(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			if msglen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + msglen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			if m.SuppressExpiry == nil {
-				m.SuppressExpiry = &timestamppb.Timestamp{}
-			}
-			if err := (*timestamppb1.Timestamp)(m.SuppressExpiry).UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
-				return err
-			}
-			iNdEx = postIndex
 		case 5:
+			if wireType == 0 {
+				var v storage.Source
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= storage.Source(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				m.Source = append(m.Source, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				if postIndex > l {
+					return io.ErrUnexpectedEOF
+				}
+				var elementCount int
+				if elementCount != 0 && len(m.Source) == 0 {
+					m.Source = make([]storage.Source, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v storage.Source
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return protohelpers.ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= storage.Source(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Source = append(m.Source, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Source", wireType)
+			}
+		case 6:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FirstSystemOccurrence", wireType)
 			}
@@ -2437,7 +2928,7 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 				return err
 			}
 			iNdEx = postIndex
-		case 6:
+		case 7:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field FirstImageOccurrence", wireType)
 			}
@@ -2470,6 +2961,42 @@ func (m *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) UnmarshalVT
 				m.FirstImageOccurrence = &timestamppb.Timestamp{}
 			}
 			if err := (*timestamppb1.Timestamp)(m.FirstImageOccurrence).UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
+				return err
+			}
+			iNdEx = postIndex
+		case 8:
+			if wireType != 2 {
+				return fmt.Errorf("proto: wrong wireType = %d for field Suppression", wireType)
+			}
+			var msglen int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				msglen |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			if msglen < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			postIndex := iNdEx + msglen
+			if postIndex < 0 {
+				return protohelpers.ErrInvalidLength
+			}
+			if postIndex > l {
+				return io.ErrUnexpectedEOF
+			}
+			if m.Suppression == nil {
+				m.Suppression = &ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression{}
+			}
+			if err := m.Suppression.UnmarshalVTUnsafe(dAtA[iNdEx:postIndex]); err != nil {
 				return err
 			}
 			iNdEx = postIndex

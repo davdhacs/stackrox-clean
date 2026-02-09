@@ -179,16 +179,21 @@
         "id": {
           "type": "string"
         },
-        "suppressed": {
-          "type": "boolean"
+        "cvss": {
+          "type": "number",
+          "format": "float"
         },
-        "suppressActivation": {
-          "type": "string",
-          "format": "date-time"
+        "severity": {
+          "$ref": "#/definitions/storageVulnerabilitySeverity"
         },
-        "suppressExpiry": {
-          "type": "string",
-          "format": "date-time"
+        "state": {
+          "$ref": "#/definitions/storageVulnerabilityState"
+        },
+        "source": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/storageSource"
+          }
         },
         "firstSystemOccurrence": {
           "type": "string",
@@ -199,6 +204,9 @@
           "type": "string",
           "format": "date-time",
           "description": "Time when the CVE was first seen in this image."
+        },
+        "suppression": {
+          "$ref": "#/definitions/VulnerabilitySuppression"
         }
       }
     },
@@ -324,6 +332,19 @@
         "BIDIRECTIONAL"
       ],
       "default": "NONE"
+    },
+    "VulnerabilitySuppression": {
+      "type": "object",
+      "properties": {
+        "suppressActivation": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "suppressExpiry": {
+          "type": "string",
+          "format": "date-time"
+        }
+      }
     },
     "googlerpcStatus": {
       "type": "object",

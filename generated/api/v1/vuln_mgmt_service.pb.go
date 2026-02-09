@@ -320,15 +320,17 @@ func (x *ImageVulnerabilitiesResponse_Image_Component) GetVulnerabilities() []*I
 }
 
 type ImageVulnerabilitiesResponse_Image_Component_Vulnerability struct {
-	state              protoimpl.MessageState `protogen:"open.v1"`
-	Id                 string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
-	Suppressed         bool                   `protobuf:"varint,2,opt,name=suppressed,proto3" json:"suppressed,omitempty"`
-	SuppressActivation *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=suppress_activation,json=suppressActivation,proto3" json:"suppress_activation,omitempty"`
-	SuppressExpiry     *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=suppress_expiry,json=suppressExpiry,proto3" json:"suppress_expiry,omitempty"`
+	state    protoimpl.MessageState        `protogen:"open.v1"`
+	Id       string                        `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Cvss     float32                       `protobuf:"fixed32,2,opt,name=cvss,proto3" json:"cvss,omitempty"`
+	Severity storage.VulnerabilitySeverity `protobuf:"varint,3,opt,name=severity,proto3,enum=storage.VulnerabilitySeverity" json:"severity,omitempty"`
+	State    storage.VulnerabilityState    `protobuf:"varint,4,opt,name=state,proto3,enum=storage.VulnerabilityState" json:"state,omitempty"`
+	Source   []storage.Source              `protobuf:"varint,5,rep,packed,name=source,proto3,enum=storage.Source" json:"source,omitempty"`
 	// Time when the CVE was first seen, for this specific distro, in the system.
-	FirstSystemOccurrence *timestamppb.Timestamp `protobuf:"bytes,5,opt,name=first_system_occurrence,json=firstSystemOccurrence,proto3" json:"first_system_occurrence,omitempty"`
+	FirstSystemOccurrence *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=first_system_occurrence,json=firstSystemOccurrence,proto3" json:"first_system_occurrence,omitempty"`
 	// Time when the CVE was first seen in this image.
-	FirstImageOccurrence *timestamppb.Timestamp `protobuf:"bytes,6,opt,name=first_image_occurrence,json=firstImageOccurrence,proto3" json:"first_image_occurrence,omitempty"`
+	FirstImageOccurrence *timestamppb.Timestamp                                                  `protobuf:"bytes,7,opt,name=first_image_occurrence,json=firstImageOccurrence,proto3" json:"first_image_occurrence,omitempty"`
+	Suppression          *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression `protobuf:"bytes,8,opt,name=suppression,proto3" json:"suppression,omitempty"`
 	unknownFields        protoimpl.UnknownFields
 	sizeCache            protoimpl.SizeCache
 }
@@ -370,23 +372,30 @@ func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetId() str
 	return ""
 }
 
-func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetSuppressed() bool {
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetCvss() float32 {
 	if x != nil {
-		return x.Suppressed
+		return x.Cvss
 	}
-	return false
+	return 0
 }
 
-func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetSuppressActivation() *timestamppb.Timestamp {
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetSeverity() storage.VulnerabilitySeverity {
 	if x != nil {
-		return x.SuppressActivation
+		return x.Severity
 	}
-	return nil
+	return storage.VulnerabilitySeverity(0)
 }
 
-func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetSuppressExpiry() *timestamppb.Timestamp {
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetState() storage.VulnerabilityState {
 	if x != nil {
-		return x.SuppressExpiry
+		return x.State
+	}
+	return storage.VulnerabilityState(0)
+}
+
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetSource() []storage.Source {
+	if x != nil {
+		return x.Source
 	}
 	return nil
 }
@@ -405,11 +414,70 @@ func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetFirstIma
 	return nil
 }
 
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability) GetSuppression() *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression {
+	if x != nil {
+		return x.Suppression
+	}
+	return nil
+}
+
+type ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression struct {
+	state              protoimpl.MessageState `protogen:"open.v1"`
+	SuppressActivation *timestamppb.Timestamp `protobuf:"bytes,1,opt,name=suppress_activation,json=suppressActivation,proto3" json:"suppress_activation,omitempty"`
+	SuppressExpiry     *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=suppress_expiry,json=suppressExpiry,proto3" json:"suppress_expiry,omitempty"`
+	unknownFields      protoimpl.UnknownFields
+	sizeCache          protoimpl.SizeCache
+}
+
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) Reset() {
+	*x = ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression{}
+	mi := &file_api_v1_vuln_mgmt_service_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) ProtoMessage() {}
+
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) ProtoReflect() protoreflect.Message {
+	mi := &file_api_v1_vuln_mgmt_service_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression.ProtoReflect.Descriptor instead.
+func (*ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) Descriptor() ([]byte, []int) {
+	return file_api_v1_vuln_mgmt_service_proto_rawDescGZIP(), []int{2, 0, 0, 0, 0}
+}
+
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) GetSuppressActivation() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SuppressActivation
+	}
+	return nil
+}
+
+func (x *ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression) GetSuppressExpiry() *timestamppb.Timestamp {
+	if x != nil {
+		return x.SuppressExpiry
+	}
+	return nil
+}
+
 var File_api_v1_vuln_mgmt_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_vuln_mgmt_service_proto_rawDesc = "" +
 	"\n" +
-	"\x1eapi/v1/vuln_mgmt_service.proto\x12\x02v1\x1a\x12api/v1/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x18storage/deployment.proto\x1a\x13storage/image.proto\"P\n" +
+	"\x1eapi/v1/vuln_mgmt_service.proto\x12\x02v1\x1a\x12api/v1/empty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x1fgoogle/protobuf/timestamp.proto\x1a\x11storage/cve.proto\x1a\x18storage/deployment.proto\x1a\x13storage/image.proto\"P\n" +
 	"\x1eVulnMgmtExportWorkloadsRequest\x12\x18\n" +
 	"\atimeout\x18\x01 \x01(\x05R\atimeout\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\"\x9b\x01\n" +
@@ -418,29 +486,32 @@ const file_api_v1_vuln_mgmt_service_proto_rawDesc = "" +
 	"deployment\x18\x01 \x01(\v2\x13.storage.DeploymentR\n" +
 	"deployment\x12&\n" +
 	"\x06images\x18\x02 \x03(\v2\x0e.storage.ImageR\x06images\x12\x1b\n" +
-	"\tlive_pods\x18\x03 \x01(\x05R\blivePods\"\x9f\a\n" +
+	"\tlive_pods\x18\x03 \x01(\x05R\blivePods\"\xa9\t\n" +
 	"\x1cImageVulnerabilitiesResponse\x12D\n" +
-	"\x06images\x18\x01 \x03(\v2,.v1.ImageVulnerabilitiesResponse.ImagesEntryR\x06images\x1a\xd5\x05\n" +
+	"\x06images\x18\x01 \x03(\v2,.v1.ImageVulnerabilitiesResponse.ImagesEntryR\x06images\x1a\xdf\a\n" +
 	"\x05Image\x12P\n" +
 	"\n" +
 	"components\x18\x01 \x03(\v20.v1.ImageVulnerabilitiesResponse.Image.ComponentR\n" +
 	"components\x12!\n" +
-	"\fworkload_ids\x18\x02 \x03(\tR\vworkloadIds\x1a\xd6\x04\n" +
+	"\fworkload_ids\x18\x02 \x03(\tR\vworkloadIds\x1a\xe0\x06\n" +
 	"\tComponent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\x12\x1b\n" +
 	"\tlayer_sha\x18\x03 \x01(\tR\blayerSha\x12\x1a\n" +
 	"\blocation\x18\x04 \x01(\tR\blocation\x12h\n" +
-	"\x0fvulnerabilities\x18\x05 \x03(\v2>.v1.ImageVulnerabilitiesResponse.Image.Component.VulnerabilityR\x0fvulnerabilities\x1a\xf7\x02\n" +
+	"\x0fvulnerabilities\x18\x05 \x03(\v2>.v1.ImageVulnerabilitiesResponse.Image.Component.VulnerabilityR\x0fvulnerabilities\x1a\x81\x05\n" +
 	"\rVulnerability\x12\x0e\n" +
-	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1e\n" +
-	"\n" +
-	"suppressed\x18\x02 \x01(\bR\n" +
-	"suppressed\x12K\n" +
-	"\x13suppress_activation\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x12suppressActivation\x12C\n" +
-	"\x0fsuppress_expiry\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x0esuppressExpiry\x12R\n" +
-	"\x17first_system_occurrence\x18\x05 \x01(\v2\x1a.google.protobuf.TimestampR\x15firstSystemOccurrence\x12P\n" +
-	"\x16first_image_occurrence\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x14firstImageOccurrence\x1aa\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x12\n" +
+	"\x04cvss\x18\x02 \x01(\x02R\x04cvss\x12:\n" +
+	"\bseverity\x18\x03 \x01(\x0e2\x1e.storage.VulnerabilitySeverityR\bseverity\x121\n" +
+	"\x05state\x18\x04 \x01(\x0e2\x1b.storage.VulnerabilityStateR\x05state\x12'\n" +
+	"\x06source\x18\x05 \x03(\x0e2\x0f.storage.SourceR\x06source\x12R\n" +
+	"\x17first_system_occurrence\x18\x06 \x01(\v2\x1a.google.protobuf.TimestampR\x15firstSystemOccurrence\x12P\n" +
+	"\x16first_image_occurrence\x18\a \x01(\v2\x1a.google.protobuf.TimestampR\x14firstImageOccurrence\x12l\n" +
+	"\vsuppression\x18\b \x01(\v2J.v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.SuppressionR\vsuppression\x1a\x9f\x01\n" +
+	"\vSuppression\x12K\n" +
+	"\x13suppress_activation\x18\x01 \x01(\v2\x1a.google.protobuf.TimestampR\x12suppressActivation\x12C\n" +
+	"\x0fsuppress_expiry\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\x0esuppressExpiry\x1aa\n" +
 	"\vImagesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12<\n" +
 	"\x05value\x18\x02 \x01(\v2&.v1.ImageVulnerabilitiesResponse.ImageR\x05value:\x028\x012\x99\x02\n" +
@@ -461,40 +532,48 @@ func file_api_v1_vuln_mgmt_service_proto_rawDescGZIP() []byte {
 	return file_api_v1_vuln_mgmt_service_proto_rawDescData
 }
 
-var file_api_v1_vuln_mgmt_service_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
+var file_api_v1_vuln_mgmt_service_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_v1_vuln_mgmt_service_proto_goTypes = []any{
 	(*VulnMgmtExportWorkloadsRequest)(nil),     // 0: v1.VulnMgmtExportWorkloadsRequest
 	(*VulnMgmtExportWorkloadsResponse)(nil),    // 1: v1.VulnMgmtExportWorkloadsResponse
 	(*ImageVulnerabilitiesResponse)(nil),       // 2: v1.ImageVulnerabilitiesResponse
 	(*ImageVulnerabilitiesResponse_Image)(nil), // 3: v1.ImageVulnerabilitiesResponse.Image
 	nil, // 4: v1.ImageVulnerabilitiesResponse.ImagesEntry
-	(*ImageVulnerabilitiesResponse_Image_Component)(nil),               // 5: v1.ImageVulnerabilitiesResponse.Image.Component
-	(*ImageVulnerabilitiesResponse_Image_Component_Vulnerability)(nil), // 6: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability
-	(*storage.Deployment)(nil),                                         // 7: storage.Deployment
-	(*storage.Image)(nil),                                              // 8: storage.Image
-	(*timestamppb.Timestamp)(nil),                                      // 9: google.protobuf.Timestamp
-	(*Empty)(nil),                                                      // 10: v1.Empty
+	(*ImageVulnerabilitiesResponse_Image_Component)(nil),                           // 5: v1.ImageVulnerabilitiesResponse.Image.Component
+	(*ImageVulnerabilitiesResponse_Image_Component_Vulnerability)(nil),             // 6: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability
+	(*ImageVulnerabilitiesResponse_Image_Component_Vulnerability_Suppression)(nil), // 7: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.Suppression
+	(*storage.Deployment)(nil),                                                     // 8: storage.Deployment
+	(*storage.Image)(nil),                                                          // 9: storage.Image
+	(storage.VulnerabilitySeverity)(0),                                             // 10: storage.VulnerabilitySeverity
+	(storage.VulnerabilityState)(0),                                                // 11: storage.VulnerabilityState
+	(storage.Source)(0),                                                            // 12: storage.Source
+	(*timestamppb.Timestamp)(nil),                                                  // 13: google.protobuf.Timestamp
+	(*Empty)(nil),                                                                  // 14: v1.Empty
 }
 var file_api_v1_vuln_mgmt_service_proto_depIdxs = []int32{
-	7,  // 0: v1.VulnMgmtExportWorkloadsResponse.deployment:type_name -> storage.Deployment
-	8,  // 1: v1.VulnMgmtExportWorkloadsResponse.images:type_name -> storage.Image
+	8,  // 0: v1.VulnMgmtExportWorkloadsResponse.deployment:type_name -> storage.Deployment
+	9,  // 1: v1.VulnMgmtExportWorkloadsResponse.images:type_name -> storage.Image
 	4,  // 2: v1.ImageVulnerabilitiesResponse.images:type_name -> v1.ImageVulnerabilitiesResponse.ImagesEntry
 	5,  // 3: v1.ImageVulnerabilitiesResponse.Image.components:type_name -> v1.ImageVulnerabilitiesResponse.Image.Component
 	3,  // 4: v1.ImageVulnerabilitiesResponse.ImagesEntry.value:type_name -> v1.ImageVulnerabilitiesResponse.Image
 	6,  // 5: v1.ImageVulnerabilitiesResponse.Image.Component.vulnerabilities:type_name -> v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability
-	9,  // 6: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.suppress_activation:type_name -> google.protobuf.Timestamp
-	9,  // 7: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.suppress_expiry:type_name -> google.protobuf.Timestamp
-	9,  // 8: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.first_system_occurrence:type_name -> google.protobuf.Timestamp
-	9,  // 9: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.first_image_occurrence:type_name -> google.protobuf.Timestamp
-	0,  // 10: v1.VulnMgmtService.VulnMgmtExportWorkloads:input_type -> v1.VulnMgmtExportWorkloadsRequest
-	10, // 11: v1.VulnMgmtService.ImageVulnerabilities:input_type -> v1.Empty
-	1,  // 12: v1.VulnMgmtService.VulnMgmtExportWorkloads:output_type -> v1.VulnMgmtExportWorkloadsResponse
-	2,  // 13: v1.VulnMgmtService.ImageVulnerabilities:output_type -> v1.ImageVulnerabilitiesResponse
-	12, // [12:14] is the sub-list for method output_type
-	10, // [10:12] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	10, // 6: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.severity:type_name -> storage.VulnerabilitySeverity
+	11, // 7: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.state:type_name -> storage.VulnerabilityState
+	12, // 8: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.source:type_name -> storage.Source
+	13, // 9: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.first_system_occurrence:type_name -> google.protobuf.Timestamp
+	13, // 10: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.first_image_occurrence:type_name -> google.protobuf.Timestamp
+	7,  // 11: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.suppression:type_name -> v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.Suppression
+	13, // 12: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.Suppression.suppress_activation:type_name -> google.protobuf.Timestamp
+	13, // 13: v1.ImageVulnerabilitiesResponse.Image.Component.Vulnerability.Suppression.suppress_expiry:type_name -> google.protobuf.Timestamp
+	0,  // 14: v1.VulnMgmtService.VulnMgmtExportWorkloads:input_type -> v1.VulnMgmtExportWorkloadsRequest
+	14, // 15: v1.VulnMgmtService.ImageVulnerabilities:input_type -> v1.Empty
+	1,  // 16: v1.VulnMgmtService.VulnMgmtExportWorkloads:output_type -> v1.VulnMgmtExportWorkloadsResponse
+	2,  // 17: v1.VulnMgmtService.ImageVulnerabilities:output_type -> v1.ImageVulnerabilitiesResponse
+	16, // [16:18] is the sub-list for method output_type
+	14, // [14:16] is the sub-list for method input_type
+	14, // [14:14] is the sub-list for extension type_name
+	14, // [14:14] is the sub-list for extension extendee
+	0,  // [0:14] is the sub-list for field type_name
 }
 
 func init() { file_api_v1_vuln_mgmt_service_proto_init() }
@@ -509,7 +588,7 @@ func file_api_v1_vuln_mgmt_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_v1_vuln_mgmt_service_proto_rawDesc), len(file_api_v1_vuln_mgmt_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   7,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

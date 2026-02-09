@@ -5,6 +5,7 @@ package v1;
 import "api/v1/empty.proto";
 import weak "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
+import "storage/cve.proto";
 import "storage/deployment.proto";
 import "storage/image.proto";
 
@@ -35,14 +36,22 @@ message ImageVulnerabilitiesResponse {
   message Image {
     message Component {
       message Vulnerability {
+        message Suppression {
+          google.protobuf.Timestamp suppress_activation = 1;
+          google.protobuf.Timestamp suppress_expiry = 2;
+        }
         string id = 1;
-        bool suppressed = 2;
-        google.protobuf.Timestamp suppress_activation = 3;
-        google.protobuf.Timestamp suppress_expiry = 4;
+        float cvss = 2;
+        storage.VulnerabilitySeverity severity = 3;
+        storage.VulnerabilityState state = 4;
+        repeated storage.Source source = 5;
+
         // Time when the CVE was first seen, for this specific distro, in the system.
-        google.protobuf.Timestamp first_system_occurrence = 5;
+        google.protobuf.Timestamp first_system_occurrence = 6;
         // Time when the CVE was first seen in this image.
-        google.protobuf.Timestamp first_image_occurrence = 6;
+        google.protobuf.Timestamp first_image_occurrence = 7;
+
+        Suppression suppression = 8;
       }
       string name = 1;
       string version = 2;
