@@ -135,7 +135,7 @@ describe('policyCriteriaValidators', () => {
             }
 
             const context: PolicyContext = {
-                eventSource: eventSource,
+                eventSource,
                 lifecycleStages: ['RUNTIME'],
             };
 

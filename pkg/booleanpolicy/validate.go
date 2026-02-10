@@ -39,10 +39,7 @@ var (
 	// Evaluated such that all_exist(set n) OR all_exist(set n+1) OR ... all_exist(set n+m)
 	eventSourceRequirements = map[storage.EventSource][]set.StringSet{
 		storage.EventSource_AUDIT_LOG_EVENT: []set.StringSet{
-			set.NewStringSet(
-				fieldnames.KubeResource,
-				fieldnames.KubeAPIVerb,
-			),
+			set.NewStringSet(fieldnames.KubeResource, fieldnames.KubeAPIVerb),
 		},
 		// FileAccess fields are currently the only ones supported for
 		// node events. In the future, when more node events are supported,
