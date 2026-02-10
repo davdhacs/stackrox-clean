@@ -224,18 +224,8 @@ func (s *serviceImpl) ImageVulnerabilities(ctx context.Context, req *v1.ImageVul
 
 // getVulnerableImageComponents returns vulnerable image components.
 func (s *serviceImpl) getVulnerableImageComponents(img *storage.Image) ([]*v1.ImageVulnerabilitiesResponse_Image_Component, error) {
-	scan := img.GetScan()
-	if scan == nil {
-		return nil, nil
-	}
-
-	components := scan.GetComponents()
+	components := img.GetScan().GetComponents()
 	if len(components) == 0 {
-		return nil, nil
-	}
-
-	metadata := img.GetMetadata()
-	if metadata == nil {
 		return nil, nil
 	}
 
