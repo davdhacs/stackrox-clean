@@ -576,7 +576,8 @@
           "items": {
             "type": "integer",
             "format": "int32"
-          }
+          },
+          "description": "If layer indices list is empty for an image, no layers are included.\nIf layer indices list is nil for an image, all layers are included."
         }
       }
     },
@@ -1570,7 +1571,7 @@
           "additionalProperties": {
             "$ref": "#/definitions/GetImageMetadataRequestLayers"
           },
-          "description": "Map of image SHA to list of requested layer indices for that image.\nIf layer indices list is empty for an image, no layers are included.\nIf the map is empty, all images are returned."
+          "description": "Map of image SHA to list of requested layer indices for that image.\nIf the map is empty, all images are returned."
         }
       },
       "description": "GetImageMetadataRequest requests reduced image metadata (names and layers)\nfor specified images."

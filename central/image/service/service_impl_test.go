@@ -496,8 +496,11 @@ func TestGetLayers(t *testing.T) {
 			desc:            "nil request returns nil",
 			metadata:        &storage.ImageMetadata{V1: &storage.V1Metadata{Layers: []*storage.ImageLayer{{Instruction: "FROM"}, {Instruction: "RUN"}}}},
 			requestedLayers: nil,
-			expectedLayers:  nil,
-			expectedError:   false,
+			expectedLayers: map[int32]*storage.ImageLayer{
+				0: {Instruction: "FROM"},
+				1: {Instruction: "RUN"},
+			},
+			expectedError: false,
 		},
 		{
 			desc:            "single valid layer request",
@@ -528,7 +531,7 @@ func TestGetLayers(t *testing.T) {
 			requestedLayers:  []int32{-1},
 			expectedLayers:   nil,
 			expectedError:    true,
-			expectedErrorMsg: "bad layer index",
+			expectedErrorMsg: "bad layer index: -1",
 		},
 		{
 			desc:             "index equal to length returns error",
@@ -536,7 +539,7 @@ func TestGetLayers(t *testing.T) {
 			requestedLayers:  []int32{2},
 			expectedLayers:   nil,
 			expectedError:    true,
-			expectedErrorMsg: "bad layer index",
+			expectedErrorMsg: "bad layer index: 2",
 		},
 		{
 			desc:             "index greater than length returns error",
@@ -544,7 +547,7 @@ func TestGetLayers(t *testing.T) {
 			requestedLayers:  []int32{5},
 			expectedLayers:   nil,
 			expectedError:    true,
-			expectedErrorMsg: "bad layer index",
+			expectedErrorMsg: "bad layer index: 5",
 		},
 		{
 			desc:            "request last layer in list",
@@ -571,7 +574,7 @@ func TestGetLayers(t *testing.T) {
 			requestedLayers:  []int32{0},
 			expectedLayers:   nil,
 			expectedError:    true,
-			expectedErrorMsg: "bad layer index",
+			expectedErrorMsg: "bad layer index: 0",
 		},
 		{
 			desc:             "empty layers list returns error for any request",
@@ -579,7 +582,7 @@ func TestGetLayers(t *testing.T) {
 			requestedLayers:  []int32{0},
 			expectedLayers:   nil,
 			expectedError:    true,
-			expectedErrorMsg: "bad layer index",
+			expectedErrorMsg: "bad layer index: 0",
 		},
 	}
 

@@ -1121,7 +1121,6 @@ func (x *ExportImageResponse) GetImage() *storage.Image {
 type GetImageMetadataRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Map of image SHA to list of requested layer indices for that image.
-	// If layer indices list is empty for an image, no layers are included.
 	// If the map is empty, all images are returned.
 	Images        map[string]*GetImageMetadataRequest_Layers `protobuf:"bytes,1,rep,name=images,proto3" json:"images,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
@@ -1310,8 +1309,10 @@ func (*ScanImageInternalResponseDetails_TooManyParallelScans) Descriptor() ([]by
 }
 
 type GetImageMetadataRequest_Layers struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Layers        []int32                `protobuf:"varint,1,rep,packed,name=layers,proto3" json:"layers,omitempty"`
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// If layer indices list is empty for an image, no layers are included.
+	// If layer indices list is nil for an image, all layers are included.
+	Layers        []int32 `protobuf:"varint,1,rep,packed,name=layers,proto3" json:"layers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

@@ -153,10 +153,11 @@ message ExportImageResponse {
 // for specified images.
 message GetImageMetadataRequest {
   message Layers {
+    // If layer indices list is empty for an image, no layers are included.
+    // If layer indices list is nil for an image, all layers are included.
     repeated int32 layers = 1;
   }
   // Map of image SHA to list of requested layer indices for that image.
-  // If layer indices list is empty for an image, no layers are included.
   // If the map is empty, all images are returned.
   map<string, Layers> images = 1;
 }

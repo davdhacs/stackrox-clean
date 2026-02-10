@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"slices"
 	"strings"
 	"time"
 
@@ -262,7 +263,7 @@ func (s *serviceImpl) getImageMetadataV1(ctx context.Context, imageSHA string, l
 	}
 	layers, err := getLayers(image.GetMetadata(), layerIndices)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "cannot get layers of image %q", id)
 	}
 	metadata := &v1.GetImageMetadataResponse_Metadata{
 		Names:  make([]string, 0, len(image.GetNames())),
@@ -300,16 +301,20 @@ func (s *serviceImpl) getImageMetadataV2(ctx context.Context, imageSHA string, l
 }
 
 func getLayers(md *storage.ImageMetadata, indices []int32) (map[int32]*storage.ImageLayer, error) {
-	if len(indices) == 0 {
+	if indices != nil && len(indices) == 0 {
 		return nil, nil
 	}
-	result := make(map[int32]*storage.ImageLayer, len(indices))
 	imageLayers := md.GetV1().GetLayers()
-	for _, index := range indices {
-		if index < 0 || int(index) >= len(imageLayers) {
-			return nil, errBadLayerIndex
+	for _, i := range indices {
+		if i < 0 || int(i) >= len(imageLayers) {
+			return nil, errBadLayerIndex.CausedByf("%d", i)
 		}
-		result[index] = imageLayers[index]
+	}
+	result := make(map[int32]*storage.ImageLayer, len(indices))
+	for i, layer := range imageLayers {
+		if indices == nil || slices.Contains(indices, int32(i)) {
+			result[int32(i)] = layer
+		}
 	}
 	return result, nil
 }
