@@ -64,6 +64,7 @@ message GetWorkloadMetadataResponse {
     string type = 2;
     string cluster = 3;
     string namespace = 4;
+    bool platform_component = 5;
   }
   // Map of workload ID to metadata.
   map<string, Metadata> workloads = 1;

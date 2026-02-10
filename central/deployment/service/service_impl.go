@@ -99,10 +99,11 @@ func (s *serviceImpl) GetWorkloadMetadata(ctx context.Context, req *v1.GetWorklo
 
 	for _, deployment := range deployments {
 		metadata := &v1.GetWorkloadMetadataResponse_Metadata{
-			Name:      deployment.GetName(),
-			Type:      deployment.GetType(),
-			Cluster:   deployment.GetClusterName(),
-			Namespace: deployment.GetNamespace(),
+			Name:              deployment.GetName(),
+			Type:              deployment.GetType(),
+			Cluster:           deployment.GetClusterName(),
+			Namespace:         deployment.GetNamespace(),
+			PlatformComponent: deployment.GetPlatformComponent(),
 		}
 		response.Workloads[deployment.GetId()] = metadata
 	}

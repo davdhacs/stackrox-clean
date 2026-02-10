@@ -278,6 +278,7 @@ func (m *GetWorkloadMetadataResponse_Metadata) CloneVT() *GetWorkloadMetadataRes
 	r.Type = m.Type
 	r.Cluster = m.Cluster
 	r.Namespace = m.Namespace
+	r.PlatformComponent = m.PlatformComponent
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -641,6 +642,9 @@ func (this *GetWorkloadMetadataResponse_Metadata) EqualVT(that *GetWorkloadMetad
 		return false
 	}
 	if this.Namespace != that.Namespace {
+		return false
+	}
+	if this.PlatformComponent != that.PlatformComponent {
 		return false
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
@@ -1263,6 +1267,16 @@ func (m *GetWorkloadMetadataResponse_Metadata) MarshalToSizedBufferVT(dAtA []byt
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
+	if m.PlatformComponent {
+		i--
+		if m.PlatformComponent {
+			dAtA[i] = 1
+		} else {
+			dAtA[i] = 0
+		}
+		i--
+		dAtA[i] = 0x28
+	}
 	if len(m.Namespace) > 0 {
 		i -= len(m.Namespace)
 		copy(dAtA[i:], m.Namespace)
@@ -1581,6 +1595,9 @@ func (m *GetWorkloadMetadataResponse_Metadata) SizeVT() (n int) {
 	l = len(m.Namespace)
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	}
+	if m.PlatformComponent {
+		n += 2
 	}
 	n += len(m.unknownFields)
 	return n
@@ -2865,6 +2882,26 @@ func (m *GetWorkloadMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 			}
 			m.Namespace = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PlatformComponent", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.PlatformComponent = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -4359,6 +4396,26 @@ func (m *GetWorkloadMetadataResponse_Metadata) UnmarshalVTUnsafe(dAtA []byte) er
 			}
 			m.Namespace = stringValue
 			iNdEx = postIndex
+		case 5:
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field PlatformComponent", wireType)
+			}
+			var v int
+			for shift := uint(0); ; shift += 7 {
+				if shift >= 64 {
+					return protohelpers.ErrIntOverflow
+				}
+				if iNdEx >= l {
+					return io.ErrUnexpectedEOF
+				}
+				b := dAtA[iNdEx]
+				iNdEx++
+				v |= int(b&0x7F) << shift
+				if b < 0x80 {
+					break
+				}
+			}
+			m.PlatformComponent = bool(v != 0)
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])

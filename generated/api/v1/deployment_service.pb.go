@@ -543,13 +543,14 @@ func (x *ListDeploymentsWithProcessInfoResponse_DeploymentWithProcessInfo) GetBa
 }
 
 type GetWorkloadMetadataResponse_Metadata struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Name          string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
-	Cluster       string                 `protobuf:"bytes,3,opt,name=cluster,proto3" json:"cluster,omitempty"`
-	Namespace     string                 `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Type              string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	Cluster           string                 `protobuf:"bytes,3,opt,name=cluster,proto3" json:"cluster,omitempty"`
+	Namespace         string                 `protobuf:"bytes,4,opt,name=namespace,proto3" json:"namespace,omitempty"`
+	PlatformComponent bool                   `protobuf:"varint,5,opt,name=platform_component,json=platformComponent,proto3" json:"platform_component,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *GetWorkloadMetadataResponse_Metadata) Reset() {
@@ -610,6 +611,13 @@ func (x *GetWorkloadMetadataResponse_Metadata) GetNamespace() string {
 	return ""
 }
 
+func (x *GetWorkloadMetadataResponse_Metadata) GetPlatformComponent() bool {
+	if x != nil {
+		return x.PlatformComponent
+	}
+	return false
+}
+
 var File_api_v1_deployment_service_proto protoreflect.FileDescriptor
 
 const file_api_v1_deployment_service_proto_rawDesc = "" +
@@ -647,14 +655,15 @@ const file_api_v1_deployment_service_proto_rawDesc = "" +
 	"deployment\x18\x01 \x01(\v2\x13.storage.DeploymentR\n" +
 	"deployment\"?\n" +
 	"\x1aGetWorkloadMetadataRequest\x12!\n" +
-	"\fworkload_ids\x18\x01 \x03(\tR\vworkloadIds\"\xbf\x02\n" +
+	"\fworkload_ids\x18\x01 \x03(\tR\vworkloadIds\"\xef\x02\n" +
 	"\x1bGetWorkloadMetadataResponse\x12L\n" +
-	"\tworkloads\x18\x01 \x03(\v2..v1.GetWorkloadMetadataResponse.WorkloadsEntryR\tworkloads\x1aj\n" +
+	"\tworkloads\x18\x01 \x03(\v2..v1.GetWorkloadMetadataResponse.WorkloadsEntryR\tworkloads\x1a\x99\x01\n" +
 	"\bMetadata\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x18\n" +
 	"\acluster\x18\x03 \x01(\tR\acluster\x12\x1c\n" +
-	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x1af\n" +
+	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12-\n" +
+	"\x12platform_component\x18\x05 \x01(\bR\x11platformComponent\x1af\n" +
 	"\x0eWorkloadsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12>\n" +
 	"\x05value\x18\x02 \x01(\v2(.v1.GetWorkloadMetadataResponse.MetadataR\x05value:\x028\x012\xe3\x06\n" +
