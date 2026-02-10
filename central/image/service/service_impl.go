@@ -239,7 +239,7 @@ func (s *serviceImpl) getImageMetadataV1(ctx context.Context, req *v1.GetImageMe
 		Images: make(map[string]*v1.GetImageMetadataResponse_Metadata),
 	}
 
-	for imageSHA, layerSHAs := range req.GetImages() {
+	for imageSHA, layerIndices := range req.GetImages() {
 		id := types.NewDigest(imageSHA).Digest()
 		image, exists, err := s.mappingDatastore.GetImage(ctx, id)
 		if err != nil {
@@ -248,28 +248,17 @@ func (s *serviceImpl) getImageMetadataV1(ctx context.Context, req *v1.GetImageMe
 		if !exists {
 			continue
 		}
-
+		layers, err := getLayers(image.GetMetadata(), layerIndices.GetLayers())
+		if err != nil {
+			return nil, err
+		}
 		metadata := &v1.GetImageMetadataResponse_Metadata{
 			Names:  make([]string, 0, len(image.GetNames())),
-			Layers: make(map[string]*storage.ImageLayer),
+			Layers: layers,
 		}
 
 		for _, name := range image.GetNames() {
 			metadata.Names = append(metadata.Names, name.GetFullName())
-		}
-
-		requestedSHAs := layerSHAs.GetShas()
-		if len(requestedSHAs) == 0 {
-			for _, layer := range image.GetMetadata().GetV1().GetLayers() {
-				metadata.Layers[layer.GetInstruction()] = layer
-			}
-		} else {
-			requestedSet := set.NewStringSet(requestedSHAs...)
-			for _, layer := range image.GetMetadata().GetV1().GetLayers() {
-				if requestedSet.Contains(layer.GetInstruction()) {
-					metadata.Layers[layer.GetInstruction()] = layer
-				}
-			}
 		}
 
 		response.Images[imageSHA] = metadata
@@ -283,7 +272,7 @@ func (s *serviceImpl) getImageMetadataV2(ctx context.Context, req *v1.GetImageMe
 		Images: make(map[string]*v1.GetImageMetadataResponse_Metadata),
 	}
 
-	for imageSHA, layerSHAs := range req.GetImages() {
+	for imageSHA, layerIndices := range req.GetImages() {
 		query := search.NewQueryBuilder().AddExactMatches(search.ImageSHA, imageSHA).ProtoQuery()
 		images, err := s.datastoreV2.SearchRawImages(ctx, query)
 		if err != nil {
@@ -292,36 +281,37 @@ func (s *serviceImpl) getImageMetadataV2(ctx context.Context, req *v1.GetImageMe
 		if len(images) == 0 {
 			continue
 		}
-
+		layers, err := getLayers(images[0].GetMetadata(), layerIndices.GetLayers())
+		if err != nil {
+			return nil, err
+		}
 		metadata := &v1.GetImageMetadataResponse_Metadata{
 			Names:  make([]string, 0, len(images)),
-			Layers: make(map[string]*storage.ImageLayer),
+			Layers: layers,
 		}
-
 		for _, image := range images {
 			metadata.Names = append(metadata.Names, image.GetName().GetFullName())
-		}
-
-		if len(images) > 0 {
-			requestedSHAs := layerSHAs.GetShas()
-			if len(requestedSHAs) == 0 {
-				for _, layer := range images[0].GetMetadata().GetV1().GetLayers() {
-					metadata.Layers[layer.GetInstruction()] = layer
-				}
-			} else {
-				requestedSet := set.NewStringSet(requestedSHAs...)
-				for _, layer := range images[0].GetMetadata().GetV1().GetLayers() {
-					if requestedSet.Contains(layer.GetInstruction()) {
-						metadata.Layers[layer.GetInstruction()] = layer
-					}
-				}
-			}
 		}
 
 		response.Images[imageSHA] = metadata
 	}
 
 	return response, nil
+}
+
+func getLayers(md *storage.ImageMetadata, indices []int32) (map[int32]*storage.ImageLayer, error) {
+	if len(indices) == 0 {
+		return nil, nil
+	}
+	result := make(map[int32]*storage.ImageLayer, len(indices))
+	imageLayers := md.GetV1().GetLayers()
+	for _, index := range indices {
+		if index < 0 || int(index) >= len(imageLayers) {
+			return nil, errors.New("bad layer index")
+		}
+		result[index] = imageLayers[index]
+	}
+	return result, nil
 }
 
 // InvalidateScanAndRegistryCaches invalidates the image scan caches

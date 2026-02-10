@@ -262,7 +262,7 @@
         "parameters": [
           {
             "name": "body",
-            "description": "GetImageMetadataRequest requests reduced image metadata (names and layers) for specified images.",
+            "description": "GetImageMetadataRequest requests reduced image metadata (names and layers)\nfor specified images.",
             "in": "body",
             "required": true,
             "schema": {
@@ -568,13 +568,14 @@
       ],
       "default": "UNKNOWN_VULNERABILITY"
     },
-    "GetImageMetadataRequestLayerSHAs": {
+    "GetImageMetadataRequestLayers": {
       "type": "object",
       "properties": {
-        "shas": {
+        "layers": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "integer",
+            "format": "int32"
           }
         }
       }
@@ -1567,12 +1568,12 @@
         "images": {
           "type": "object",
           "additionalProperties": {
-            "$ref": "#/definitions/GetImageMetadataRequestLayerSHAs"
+            "$ref": "#/definitions/GetImageMetadataRequestLayers"
           },
-          "description": "Map of image SHA to list of requested layer SHAs for that image.\nIf layer SHAs list is empty for an image, all layers are included.\nIf the map is empty, all images are returned."
+          "description": "Map of image SHA to list of requested layer indices for that image.\nIf layer indices list is empty for an image, no layers are included.\nIf the map is empty, all images are returned."
         }
       },
-      "description": "GetImageMetadataRequest requests reduced image metadata (names and layers) for specified images."
+      "description": "GetImageMetadataRequest requests reduced image metadata (names and layers)\nfor specified images."
     },
     "v1GetImageMetadataResponse": {
       "type": "object",

@@ -499,15 +499,15 @@ func (m *ExportImageResponse) CloneMessageVT() proto.Message {
 	return m.CloneVT()
 }
 
-func (m *GetImageMetadataRequest_LayerSHAs) CloneVT() *GetImageMetadataRequest_LayerSHAs {
+func (m *GetImageMetadataRequest_Layers) CloneVT() *GetImageMetadataRequest_Layers {
 	if m == nil {
-		return (*GetImageMetadataRequest_LayerSHAs)(nil)
+		return (*GetImageMetadataRequest_Layers)(nil)
 	}
-	r := new(GetImageMetadataRequest_LayerSHAs)
-	if rhs := m.Shas; rhs != nil {
-		tmpContainer := make([]string, len(rhs))
+	r := new(GetImageMetadataRequest_Layers)
+	if rhs := m.Layers; rhs != nil {
+		tmpContainer := make([]int32, len(rhs))
 		copy(tmpContainer, rhs)
-		r.Shas = tmpContainer
+		r.Layers = tmpContainer
 	}
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
@@ -516,7 +516,7 @@ func (m *GetImageMetadataRequest_LayerSHAs) CloneVT() *GetImageMetadataRequest_L
 	return r
 }
 
-func (m *GetImageMetadataRequest_LayerSHAs) CloneMessageVT() proto.Message {
+func (m *GetImageMetadataRequest_Layers) CloneMessageVT() proto.Message {
 	return m.CloneVT()
 }
 
@@ -526,7 +526,7 @@ func (m *GetImageMetadataRequest) CloneVT() *GetImageMetadataRequest {
 	}
 	r := new(GetImageMetadataRequest)
 	if rhs := m.Images; rhs != nil {
-		tmpContainer := make(map[string]*GetImageMetadataRequest_LayerSHAs, len(rhs))
+		tmpContainer := make(map[string]*GetImageMetadataRequest_Layers, len(rhs))
 		for k, v := range rhs {
 			tmpContainer[k] = v.CloneVT()
 		}
@@ -554,7 +554,7 @@ func (m *GetImageMetadataResponse_Metadata) CloneVT() *GetImageMetadataResponse_
 		r.Names = tmpContainer
 	}
 	if rhs := m.Layers; rhs != nil {
-		tmpContainer := make(map[string]*storage.ImageLayer, len(rhs))
+		tmpContainer := make(map[int32]*storage.ImageLayer, len(rhs))
 		for k, v := range rhs {
 			if vtpb, ok := interface{}(v).(interface{ CloneVT() *storage.ImageLayer }); ok {
 				tmpContainer[k] = vtpb.CloneVT()
@@ -1182,17 +1182,17 @@ func (this *ExportImageResponse) EqualMessageVT(thatMsg proto.Message) bool {
 	}
 	return this.EqualVT(that)
 }
-func (this *GetImageMetadataRequest_LayerSHAs) EqualVT(that *GetImageMetadataRequest_LayerSHAs) bool {
+func (this *GetImageMetadataRequest_Layers) EqualVT(that *GetImageMetadataRequest_Layers) bool {
 	if this == that {
 		return true
 	} else if this == nil || that == nil {
 		return false
 	}
-	if len(this.Shas) != len(that.Shas) {
+	if len(this.Layers) != len(that.Layers) {
 		return false
 	}
-	for i, vx := range this.Shas {
-		vy := that.Shas[i]
+	for i, vx := range this.Layers {
+		vy := that.Layers[i]
 		if vx != vy {
 			return false
 		}
@@ -1200,8 +1200,8 @@ func (this *GetImageMetadataRequest_LayerSHAs) EqualVT(that *GetImageMetadataReq
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
-func (this *GetImageMetadataRequest_LayerSHAs) EqualMessageVT(thatMsg proto.Message) bool {
-	that, ok := thatMsg.(*GetImageMetadataRequest_LayerSHAs)
+func (this *GetImageMetadataRequest_Layers) EqualMessageVT(thatMsg proto.Message) bool {
+	that, ok := thatMsg.(*GetImageMetadataRequest_Layers)
 	if !ok {
 		return false
 	}
@@ -1223,10 +1223,10 @@ func (this *GetImageMetadataRequest) EqualVT(that *GetImageMetadataRequest) bool
 		}
 		if p, q := vx, vy; p != q {
 			if p == nil {
-				p = &GetImageMetadataRequest_LayerSHAs{}
+				p = &GetImageMetadataRequest_Layers{}
 			}
 			if q == nil {
-				q = &GetImageMetadataRequest_LayerSHAs{}
+				q = &GetImageMetadataRequest_Layers{}
 			}
 			if !p.EqualVT(q) {
 				return false
@@ -2608,7 +2608,7 @@ func (m *ExportImageResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	return len(dAtA) - i, nil
 }
 
-func (m *GetImageMetadataRequest_LayerSHAs) MarshalVT() (dAtA []byte, err error) {
+func (m *GetImageMetadataRequest_Layers) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -2621,12 +2621,12 @@ func (m *GetImageMetadataRequest_LayerSHAs) MarshalVT() (dAtA []byte, err error)
 	return dAtA[:n], nil
 }
 
-func (m *GetImageMetadataRequest_LayerSHAs) MarshalToVT(dAtA []byte) (int, error) {
+func (m *GetImageMetadataRequest_Layers) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *GetImageMetadataRequest_LayerSHAs) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *GetImageMetadataRequest_Layers) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -2638,14 +2638,26 @@ func (m *GetImageMetadataRequest_LayerSHAs) MarshalToSizedBufferVT(dAtA []byte) 
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Shas) > 0 {
-		for iNdEx := len(m.Shas) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.Shas[iNdEx])
-			copy(dAtA[i:], m.Shas[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Shas[iNdEx])))
-			i--
-			dAtA[i] = 0xa
+	if len(m.Layers) > 0 {
+		var pksize2 int
+		for _, num := range m.Layers {
+			pksize2 += protohelpers.SizeOfVarint(uint64(num))
 		}
+		i -= pksize2
+		j1 := i
+		for _, num1 := range m.Layers {
+			num := uint64(num1)
+			for num >= 1<<7 {
+				dAtA[j1] = uint8(uint64(num)&0x7f | 0x80)
+				num >>= 7
+				j1++
+			}
+			dAtA[j1] = uint8(num)
+			j1++
+		}
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(pksize2))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
@@ -2759,11 +2771,9 @@ func (m *GetImageMetadataResponse_Metadata) MarshalToSizedBufferVT(dAtA []byte) 
 			}
 			i--
 			dAtA[i] = 0x12
-			i -= len(k)
-			copy(dAtA[i:], k)
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(k)))
+			i = protohelpers.EncodeVarint(dAtA, i, uint64(k))
 			i--
-			dAtA[i] = 0xa
+			dAtA[i] = 0x8
 			i = protohelpers.EncodeVarint(dAtA, i, uint64(baseI-i))
 			i--
 			dAtA[i] = 0x12
@@ -3316,17 +3326,18 @@ func (m *ExportImageResponse) SizeVT() (n int) {
 	return n
 }
 
-func (m *GetImageMetadataRequest_LayerSHAs) SizeVT() (n int) {
+func (m *GetImageMetadataRequest_Layers) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.Shas) > 0 {
-		for _, s := range m.Shas {
-			l = len(s)
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	if len(m.Layers) > 0 {
+		l = 0
+		for _, e := range m.Layers {
+			l += protohelpers.SizeOfVarint(uint64(e))
 		}
+		n += 1 + protohelpers.SizeOfVarint(uint64(l)) + l
 	}
 	n += len(m.unknownFields)
 	return n
@@ -3382,7 +3393,7 @@ func (m *GetImageMetadataResponse_Metadata) SizeVT() (n int) {
 				}
 			}
 			l += 1 + protohelpers.SizeOfVarint(uint64(l))
-			mapEntrySize := 1 + len(k) + protohelpers.SizeOfVarint(uint64(len(k))) + l
+			mapEntrySize := 1 + protohelpers.SizeOfVarint(uint64(k)) + l
 			n += mapEntrySize + 1 + protohelpers.SizeOfVarint(uint64(mapEntrySize))
 		}
 	}
@@ -6144,7 +6155,7 @@ func (m *ExportImageResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *GetImageMetadataRequest_LayerSHAs) UnmarshalVT(dAtA []byte) error {
+func (m *GetImageMetadataRequest_Layers) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -6167,44 +6178,88 @@ func (m *GetImageMetadataRequest_LayerSHAs) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetImageMetadataRequest_LayerSHAs: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetImageMetadataRequest_Layers: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetImageMetadataRequest_LayerSHAs: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetImageMetadataRequest_Layers: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Shas", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
+			if wireType == 0 {
+				var v int32
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int32(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
 				}
-				if iNdEx >= l {
+				m.Layers = append(m.Layers, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				if postIndex > l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
 				}
+				elementCount = count
+				if elementCount != 0 && len(m.Layers) == 0 {
+					m.Layers = make([]int32, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int32
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return protohelpers.ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int32(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Layers = append(m.Layers, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Layers", wireType)
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.Shas = append(m.Shas, string(dAtA[iNdEx:postIndex]))
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -6286,10 +6341,10 @@ func (m *GetImageMetadataRequest) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Images == nil {
-				m.Images = make(map[string]*GetImageMetadataRequest_LayerSHAs)
+				m.Images = make(map[string]*GetImageMetadataRequest_Layers)
 			}
 			var mapkey string
-			var mapvalue *GetImageMetadataRequest_LayerSHAs
+			var mapvalue *GetImageMetadataRequest_Layers
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -6363,7 +6418,7 @@ func (m *GetImageMetadataRequest) UnmarshalVT(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &GetImageMetadataRequest_LayerSHAs{}
+					mapvalue = &GetImageMetadataRequest_Layers{}
 					if err := mapvalue.UnmarshalVT(dAtA[iNdEx:postmsgIndex]); err != nil {
 						return err
 					}
@@ -6498,9 +6553,9 @@ func (m *GetImageMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Layers == nil {
-				m.Layers = make(map[string]*storage.ImageLayer)
+				m.Layers = make(map[int32]*storage.ImageLayer)
 			}
-			var mapkey string
+			var mapkey int32
 			var mapvalue *storage.ImageLayer
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
@@ -6521,7 +6576,6 @@ func (m *GetImageMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 				}
 				fieldNum := int32(wire >> 3)
 				if fieldNum == 1 {
-					var stringLenmapkey uint64
 					for shift := uint(0); ; shift += 7 {
 						if shift >= 64 {
 							return protohelpers.ErrIntOverflow
@@ -6531,24 +6585,11 @@ func (m *GetImageMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
+						mapkey |= int32(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
 					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return protohelpers.ErrInvalidLength
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return protohelpers.ErrInvalidLength
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					mapkey = string(dAtA[iNdEx:postStringIndexmapkey])
-					iNdEx = postStringIndexmapkey
 				} else if fieldNum == 2 {
 					var mapmsglen int
 					for shift := uint(0); ; shift += 7 {
@@ -9614,7 +9655,7 @@ func (m *ExportImageResponse) UnmarshalVTUnsafe(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *GetImageMetadataRequest_LayerSHAs) UnmarshalVTUnsafe(dAtA []byte) error {
+func (m *GetImageMetadataRequest_Layers) UnmarshalVTUnsafe(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -9637,48 +9678,88 @@ func (m *GetImageMetadataRequest_LayerSHAs) UnmarshalVTUnsafe(dAtA []byte) error
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetImageMetadataRequest_LayerSHAs: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetImageMetadataRequest_Layers: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetImageMetadataRequest_LayerSHAs: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetImageMetadataRequest_Layers: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Shas", wireType)
-			}
-			var stringLen uint64
-			for shift := uint(0); ; shift += 7 {
-				if shift >= 64 {
-					return protohelpers.ErrIntOverflow
+			if wireType == 0 {
+				var v int32
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					v |= int32(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
 				}
-				if iNdEx >= l {
+				m.Layers = append(m.Layers, v)
+			} else if wireType == 2 {
+				var packedLen int
+				for shift := uint(0); ; shift += 7 {
+					if shift >= 64 {
+						return protohelpers.ErrIntOverflow
+					}
+					if iNdEx >= l {
+						return io.ErrUnexpectedEOF
+					}
+					b := dAtA[iNdEx]
+					iNdEx++
+					packedLen |= int(b&0x7F) << shift
+					if b < 0x80 {
+						break
+					}
+				}
+				if packedLen < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				postIndex := iNdEx + packedLen
+				if postIndex < 0 {
+					return protohelpers.ErrInvalidLength
+				}
+				if postIndex > l {
 					return io.ErrUnexpectedEOF
 				}
-				b := dAtA[iNdEx]
-				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
-				if b < 0x80 {
-					break
+				var elementCount int
+				var count int
+				for _, integer := range dAtA[iNdEx:postIndex] {
+					if integer < 128 {
+						count++
+					}
 				}
+				elementCount = count
+				if elementCount != 0 && len(m.Layers) == 0 {
+					m.Layers = make([]int32, 0, elementCount)
+				}
+				for iNdEx < postIndex {
+					var v int32
+					for shift := uint(0); ; shift += 7 {
+						if shift >= 64 {
+							return protohelpers.ErrIntOverflow
+						}
+						if iNdEx >= l {
+							return io.ErrUnexpectedEOF
+						}
+						b := dAtA[iNdEx]
+						iNdEx++
+						v |= int32(b&0x7F) << shift
+						if b < 0x80 {
+							break
+						}
+					}
+					m.Layers = append(m.Layers, v)
+				}
+			} else {
+				return fmt.Errorf("proto: wrong wireType = %d for field Layers", wireType)
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var stringValue string
-			if intStringLen > 0 {
-				stringValue = unsafe.String(&dAtA[iNdEx], intStringLen)
-			}
-			m.Shas = append(m.Shas, stringValue)
-			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
 			skippy, err := protohelpers.Skip(dAtA[iNdEx:])
@@ -9760,10 +9841,10 @@ func (m *GetImageMetadataRequest) UnmarshalVTUnsafe(dAtA []byte) error {
 				return io.ErrUnexpectedEOF
 			}
 			if m.Images == nil {
-				m.Images = make(map[string]*GetImageMetadataRequest_LayerSHAs)
+				m.Images = make(map[string]*GetImageMetadataRequest_Layers)
 			}
 			var mapkey string
-			var mapvalue *GetImageMetadataRequest_LayerSHAs
+			var mapvalue *GetImageMetadataRequest_Layers
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -9841,7 +9922,7 @@ func (m *GetImageMetadataRequest) UnmarshalVTUnsafe(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &GetImageMetadataRequest_LayerSHAs{}
+					mapvalue = &GetImageMetadataRequest_Layers{}
 					if err := mapvalue.UnmarshalVTUnsafe(dAtA[iNdEx:postmsgIndex]); err != nil {
 						return err
 					}
@@ -9980,9 +10061,9 @@ func (m *GetImageMetadataResponse_Metadata) UnmarshalVTUnsafe(dAtA []byte) error
 				return io.ErrUnexpectedEOF
 			}
 			if m.Layers == nil {
-				m.Layers = make(map[string]*storage.ImageLayer)
+				m.Layers = make(map[int32]*storage.ImageLayer)
 			}
-			var mapkey string
+			var mapkey int32
 			var mapvalue *storage.ImageLayer
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
@@ -10003,7 +10084,6 @@ func (m *GetImageMetadataResponse_Metadata) UnmarshalVTUnsafe(dAtA []byte) error
 				}
 				fieldNum := int32(wire >> 3)
 				if fieldNum == 1 {
-					var stringLenmapkey uint64
 					for shift := uint(0); ; shift += 7 {
 						if shift >= 64 {
 							return protohelpers.ErrIntOverflow
@@ -10013,28 +10093,11 @@ func (m *GetImageMetadataResponse_Metadata) UnmarshalVTUnsafe(dAtA []byte) error
 						}
 						b := dAtA[iNdEx]
 						iNdEx++
-						stringLenmapkey |= uint64(b&0x7F) << shift
+						mapkey |= int32(b&0x7F) << shift
 						if b < 0x80 {
 							break
 						}
 					}
-					intStringLenmapkey := int(stringLenmapkey)
-					if intStringLenmapkey < 0 {
-						return protohelpers.ErrInvalidLength
-					}
-					postStringIndexmapkey := iNdEx + intStringLenmapkey
-					if postStringIndexmapkey < 0 {
-						return protohelpers.ErrInvalidLength
-					}
-					if postStringIndexmapkey > l {
-						return io.ErrUnexpectedEOF
-					}
-					if intStringLenmapkey == 0 {
-						mapkey = ""
-					} else {
-						mapkey = unsafe.String(&dAtA[iNdEx], intStringLenmapkey)
-					}
-					iNdEx = postStringIndexmapkey
 				} else if fieldNum == 2 {
 					var mapmsglen int
 					for shift := uint(0); ; shift += 7 {

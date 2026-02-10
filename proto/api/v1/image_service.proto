@@ -149,22 +149,23 @@ message ExportImageResponse {
   storage.Image image = 1;
 }
 
-// GetImageMetadataRequest requests reduced image metadata (names and layers) for specified images.
+// GetImageMetadataRequest requests reduced image metadata (names and layers)
+// for specified images.
 message GetImageMetadataRequest {
-  message LayerSHAs {
-    repeated string shas = 1;
+  message Layers {
+    repeated int32 layers = 1;
   }
-  // Map of image SHA to list of requested layer SHAs for that image.
-  // If layer SHAs list is empty for an image, all layers are included.
+  // Map of image SHA to list of requested layer indices for that image.
+  // If layer indices list is empty for an image, no layers are included.
   // If the map is empty, all images are returned.
-  map<string, LayerSHAs> images = 1;
+  map<string, Layers> images = 1;
 }
 
 // GetImageMetadataResponse returns reduced image metadata (names and layers).
 message GetImageMetadataResponse {
   message Metadata {
     repeated string names = 1;
-    map<string, storage.ImageLayer> layers = 2;
+    map<int32, storage.ImageLayer> layers = 2;
   }
   // Map of image SHA to metadata.
   map<string, Metadata> images = 1;

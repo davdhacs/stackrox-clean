@@ -1116,13 +1116,14 @@ func (x *ExportImageResponse) GetImage() *storage.Image {
 	return nil
 }
 
-// GetImageMetadataRequest requests reduced image metadata (names and layers) for specified images.
+// GetImageMetadataRequest requests reduced image metadata (names and layers)
+// for specified images.
 type GetImageMetadataRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Map of image SHA to list of requested layer SHAs for that image.
-	// If layer SHAs list is empty for an image, all layers are included.
+	// Map of image SHA to list of requested layer indices for that image.
+	// If layer indices list is empty for an image, no layers are included.
 	// If the map is empty, all images are returned.
-	Images        map[string]*GetImageMetadataRequest_LayerSHAs `protobuf:"bytes,1,rep,name=images,proto3" json:"images,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Images        map[string]*GetImageMetadataRequest_Layers `protobuf:"bytes,1,rep,name=images,proto3" json:"images,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1157,7 +1158,7 @@ func (*GetImageMetadataRequest) Descriptor() ([]byte, []int) {
 	return file_api_v1_image_service_proto_rawDescGZIP(), []int{18}
 }
 
-func (x *GetImageMetadataRequest) GetImages() map[string]*GetImageMetadataRequest_LayerSHAs {
+func (x *GetImageMetadataRequest) GetImages() map[string]*GetImageMetadataRequest_Layers {
 	if x != nil {
 		return x.Images
 	}
@@ -1308,27 +1309,27 @@ func (*ScanImageInternalResponseDetails_TooManyParallelScans) Descriptor() ([]by
 	return file_api_v1_image_service_proto_rawDescGZIP(), []int{15, 0}
 }
 
-type GetImageMetadataRequest_LayerSHAs struct {
+type GetImageMetadataRequest_Layers struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Shas          []string               `protobuf:"bytes,1,rep,name=shas,proto3" json:"shas,omitempty"`
+	Layers        []int32                `protobuf:"varint,1,rep,packed,name=layers,proto3" json:"layers,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetImageMetadataRequest_LayerSHAs) Reset() {
-	*x = GetImageMetadataRequest_LayerSHAs{}
+func (x *GetImageMetadataRequest_Layers) Reset() {
+	*x = GetImageMetadataRequest_Layers{}
 	mi := &file_api_v1_image_service_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetImageMetadataRequest_LayerSHAs) String() string {
+func (x *GetImageMetadataRequest_Layers) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetImageMetadataRequest_LayerSHAs) ProtoMessage() {}
+func (*GetImageMetadataRequest_Layers) ProtoMessage() {}
 
-func (x *GetImageMetadataRequest_LayerSHAs) ProtoReflect() protoreflect.Message {
+func (x *GetImageMetadataRequest_Layers) ProtoReflect() protoreflect.Message {
 	mi := &file_api_v1_image_service_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1340,22 +1341,22 @@ func (x *GetImageMetadataRequest_LayerSHAs) ProtoReflect() protoreflect.Message 
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetImageMetadataRequest_LayerSHAs.ProtoReflect.Descriptor instead.
-func (*GetImageMetadataRequest_LayerSHAs) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetImageMetadataRequest_Layers.ProtoReflect.Descriptor instead.
+func (*GetImageMetadataRequest_Layers) Descriptor() ([]byte, []int) {
 	return file_api_v1_image_service_proto_rawDescGZIP(), []int{18, 0}
 }
 
-func (x *GetImageMetadataRequest_LayerSHAs) GetShas() []string {
+func (x *GetImageMetadataRequest_Layers) GetLayers() []int32 {
 	if x != nil {
-		return x.Shas
+		return x.Layers
 	}
 	return nil
 }
 
 type GetImageMetadataResponse_Metadata struct {
-	state         protoimpl.MessageState         `protogen:"open.v1"`
-	Names         []string                       `protobuf:"bytes,1,rep,name=names,proto3" json:"names,omitempty"`
-	Layers        map[string]*storage.ImageLayer `protobuf:"bytes,2,rep,name=layers,proto3" json:"layers,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	state         protoimpl.MessageState        `protogen:"open.v1"`
+	Names         []string                      `protobuf:"bytes,1,rep,name=names,proto3" json:"names,omitempty"`
+	Layers        map[int32]*storage.ImageLayer `protobuf:"bytes,2,rep,name=layers,proto3" json:"layers,omitempty" protobuf_key:"varint,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1397,7 +1398,7 @@ func (x *GetImageMetadataResponse_Metadata) GetNames() []string {
 	return nil
 }
 
-func (x *GetImageMetadataResponse_Metadata) GetLayers() map[string]*storage.ImageLayer {
+func (x *GetImageMetadataResponse_Metadata) GetLayers() map[int32]*storage.ImageLayer {
 	if x != nil {
 		return x.Layers
 	}
@@ -1499,21 +1500,21 @@ const file_api_v1_image_service_proto_rawDesc = "" +
 	"\atimeout\x18\x01 \x01(\x05R\atimeout\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\";\n" +
 	"\x13ExportImageResponse\x12$\n" +
-	"\x05image\x18\x01 \x01(\v2\x0e.storage.ImageR\x05image\"\xdd\x01\n" +
+	"\x05image\x18\x01 \x01(\v2\x0e.storage.ImageR\x05image\"\xdb\x01\n" +
 	"\x17GetImageMetadataRequest\x12?\n" +
-	"\x06images\x18\x01 \x03(\v2'.v1.GetImageMetadataRequest.ImagesEntryR\x06images\x1a\x1f\n" +
-	"\tLayerSHAs\x12\x12\n" +
-	"\x04shas\x18\x01 \x03(\tR\x04shas\x1a`\n" +
+	"\x06images\x18\x01 \x03(\v2'.v1.GetImageMetadataRequest.ImagesEntryR\x06images\x1a \n" +
+	"\x06Layers\x12\x16\n" +
+	"\x06layers\x18\x01 \x03(\x05R\x06layers\x1a]\n" +
 	"\vImagesEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12;\n" +
-	"\x05value\x18\x02 \x01(\v2%.v1.GetImageMetadataRequest.LayerSHAsR\x05value:\x028\x01\"\xfc\x02\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x128\n" +
+	"\x05value\x18\x02 \x01(\v2\".v1.GetImageMetadataRequest.LayersR\x05value:\x028\x01\"\xfc\x02\n" +
 	"\x18GetImageMetadataResponse\x12@\n" +
 	"\x06images\x18\x01 \x03(\v2(.v1.GetImageMetadataResponse.ImagesEntryR\x06images\x1a\xbb\x01\n" +
 	"\bMetadata\x12\x14\n" +
 	"\x05names\x18\x01 \x03(\tR\x05names\x12I\n" +
 	"\x06layers\x18\x02 \x03(\v21.v1.GetImageMetadataResponse.Metadata.LayersEntryR\x06layers\x1aN\n" +
 	"\vLayersEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12)\n" +
+	"\x03key\x18\x01 \x01(\x05R\x03key\x12)\n" +
 	"\x05value\x18\x02 \x01(\v2\x13.storage.ImageLayerR\x05value:\x028\x01\x1a`\n" +
 	"\vImagesEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12;\n" +
@@ -1579,9 +1580,9 @@ var file_api_v1_image_service_proto_goTypes = []any{
 	(*GetImageMetadataResponse)(nil),                              // 20: v1.GetImageMetadataResponse
 	(*ScanImageInternalRequest_Source)(nil),                       // 21: v1.ScanImageInternalRequest.Source
 	(*ScanImageInternalResponseDetails_TooManyParallelScans)(nil), // 22: v1.ScanImageInternalResponseDetails.TooManyParallelScans
-	(*GetImageMetadataRequest_LayerSHAs)(nil),                     // 23: v1.GetImageMetadataRequest.LayerSHAs
-	nil, // 24: v1.GetImageMetadataRequest.ImagesEntry
-	(*GetImageMetadataResponse_Metadata)(nil), // 25: v1.GetImageMetadataResponse.Metadata
+	(*GetImageMetadataRequest_Layers)(nil),                        // 23: v1.GetImageMetadataRequest.Layers
+	nil,                                                           // 24: v1.GetImageMetadataRequest.ImagesEntry
+	(*GetImageMetadataResponse_Metadata)(nil),                     // 25: v1.GetImageMetadataResponse.Metadata
 	nil,                            // 26: v1.GetImageMetadataResponse.ImagesEntry
 	nil,                            // 27: v1.GetImageMetadataResponse.Metadata.LayersEntry
 	(*storage.ListImage)(nil),      // 28: storage.ListImage
@@ -1621,7 +1622,7 @@ var file_api_v1_image_service_proto_depIdxs = []int32{
 	30, // 18: v1.ExportImageResponse.image:type_name -> storage.Image
 	24, // 19: v1.GetImageMetadataRequest.images:type_name -> v1.GetImageMetadataRequest.ImagesEntry
 	26, // 20: v1.GetImageMetadataResponse.images:type_name -> v1.GetImageMetadataResponse.ImagesEntry
-	23, // 21: v1.GetImageMetadataRequest.ImagesEntry.value:type_name -> v1.GetImageMetadataRequest.LayerSHAs
+	23, // 21: v1.GetImageMetadataRequest.ImagesEntry.value:type_name -> v1.GetImageMetadataRequest.Layers
 	27, // 22: v1.GetImageMetadataResponse.Metadata.layers:type_name -> v1.GetImageMetadataResponse.Metadata.LayersEntry
 	25, // 23: v1.GetImageMetadataResponse.ImagesEntry.value:type_name -> v1.GetImageMetadataResponse.Metadata
 	40, // 24: v1.GetImageMetadataResponse.Metadata.LayersEntry.value:type_name -> storage.ImageLayer
