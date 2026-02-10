@@ -281,7 +281,7 @@ jobs:
         uses: ./.github/actions/cache-go-dependencies
         with:
           save: true
-          cache-group: ${{ github.job }}
+          cache_group: ${{ github.job }}
 
       - uses: ./.github/actions/handle-tagged-build
 
@@ -640,7 +640,7 @@ jobs:
         uses: ./.github/actions/cache-go-dependencies
         with:
           save: true
-          cache-group: ${{ github.job }}
+          cache_group: ${{ github.job }}
 
       - uses: ./.github/actions/handle-tagged-build
 

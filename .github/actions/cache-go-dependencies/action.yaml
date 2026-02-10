@@ -10,7 +10,7 @@ inputs:
     description: 'Git ref that triggers cache saving on push events.'
     required: false
     default: refs/heads/master
-  cache-group:
+  cache_group:
     description: 'GOCACHE group name. Jobs with the same group share a cache. Defaults to pre-build-go-binaries (shared). Set to empty string for per-job isolation.'
     required: false
     default: 'pre-build-go-binaries'
@@ -23,8 +23,8 @@ runs:
         echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
         echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
         echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_OUTPUT"
-        echo "group=${{ inputs.cache-group }}" >> "$GITHUB_OUTPUT"
-        # TODO(davdhacs): remove force-save after validating warm cache on PR
+        echo "group=${{ inputs.cache_group }}" >> "$GITHUB_OUTPUT"
+        # TODO(davdhacs): remove force-save (the `|| pull-request`) after validating warm cache on PR
         echo "save=${{ inputs.save == 'true' && (github.event_name == 'push' && github.ref == inputs.save_on_ref || github.event_name == 'pull_request') }}" >> "$GITHUB_OUTPUT"
       shell: bash
 
