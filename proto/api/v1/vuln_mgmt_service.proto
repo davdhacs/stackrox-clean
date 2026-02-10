@@ -2,7 +2,6 @@ syntax = "proto3";
 
 package v1;
 
-import "api/v1/empty.proto";
 import weak "google/api/annotations.proto";
 import "google/protobuf/timestamp.proto";
 import "storage/cve.proto";
@@ -30,6 +29,10 @@ message VulnMgmtExportWorkloadsResponse {
   storage.Deployment deployment = 1;
   repeated storage.Image images = 2;
   int32 live_pods = 3;
+}
+
+message ImageVulnerabilitiesRequest {
+  string query = 1;
 }
 
 message ImageVulnerabilitiesResponse {
@@ -80,7 +83,7 @@ service VulnMgmtService {
     option (google.api.http) = {get: "/v1/export/vuln-mgmt/workloads"};
   }
 
-  rpc ImageVulnerabilities(Empty) returns (ImageVulnerabilitiesResponse) {
+  rpc ImageVulnerabilities(ImageVulnerabilitiesRequest) returns (ImageVulnerabilitiesResponse) {
     option (google.api.http) = {get: "/v1/export/vuln-mgmt/image-vulnerabilities"};
   }
 }

@@ -1572,6 +1572,10 @@
             "$ref": "#/definitions/GetImageMetadataRequestLayers"
           },
           "description": "Map of image SHA to list of requested layer indices for that image.\nIf the map is empty, all images are returned."
+        },
+        "query": {
+          "type": "string",
+          "description": "Optional query."
         }
       },
       "description": "GetImageMetadataRequest requests reduced image metadata (names and layers)\nfor specified images."

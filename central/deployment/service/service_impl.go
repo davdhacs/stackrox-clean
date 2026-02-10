@@ -45,7 +45,7 @@ var (
 			v1.DeploymentService_GetLabels_FullMethodName,
 			v1.DeploymentService_ListDeploymentsWithProcessInfo_FullMethodName,
 			v1.DeploymentService_ExportDeployments_FullMethodName,
-			v1.DeploymentService_GetWorkloadMetadata_FullMethodName,
+			v1.DeploymentService_GetDeploymentMetadata_FullMethodName,
 		},
 	})
 	deploymentExtensionAuth = user.With(permissions.View(resources.DeploymentExtension))
@@ -82,30 +82,30 @@ func (s *serviceImpl) ExportDeployments(req *v1.ExportDeploymentRequest, srv v1.
 	})
 }
 
-// GetWorkloadMetadata returns reduced workload metadata for specified workloads.
-func (s *serviceImpl) GetWorkloadMetadata(ctx context.Context, req *v1.GetWorkloadMetadataRequest) (*v1.GetWorkloadMetadataResponse, error) {
-	response := &v1.GetWorkloadMetadataResponse{
-		Workloads: make(map[string]*v1.GetWorkloadMetadataResponse_Metadata),
-	}
-
-	if len(req.GetWorkloadIds()) == 0 {
-		return response, nil
-	}
-
-	deployments, err := s.datastore.GetDeployments(ctx, req.GetWorkloadIds())
+// GetDeploymentMetadata returns reduced workload metadata for specified workloads.
+func (s *serviceImpl) GetDeploymentMetadata(ctx context.Context, req *v1.GetDeploymentMetadataRequest) (*v1.GetDeploymentMetadataResponse, error) {
+	parsedQuery, err := search.ParseQuery(req.GetQuery(), search.MatchAllIfEmpty())
 	if err != nil {
-		return nil, err
+		return nil, errox.InvalidArgs.CausedBy(err)
 	}
 
-	for _, deployment := range deployments {
-		metadata := &v1.GetWorkloadMetadataResponse_Metadata{
+	response := &v1.GetDeploymentMetadataResponse{
+		Deployments: make(map[string]*v1.GetDeploymentMetadataResponse_Metadata),
+	}
+
+	err = s.datastore.WalkByQuery(ctx, parsedQuery, func(deployment *storage.Deployment) error {
+		metadata := &v1.GetDeploymentMetadataResponse_Metadata{
 			Name:              deployment.GetName(),
 			Type:              deployment.GetType(),
 			Cluster:           deployment.GetClusterName(),
 			Namespace:         deployment.GetNamespace(),
 			PlatformComponent: deployment.GetPlatformComponent(),
 		}
-		response.Workloads[deployment.GetId()] = metadata
+		response.Deployments[deployment.GetId()] = metadata
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	return response, nil

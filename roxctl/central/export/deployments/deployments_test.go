@@ -93,7 +93,7 @@ func (s *fakeDeploymentService) GetLabels(_ context.Context, _ *v1.Empty) (*v1.D
 	return nil, errox.NotImplemented
 }
 
-func (s *fakeDeploymentService) GetWorkloadMetadata(_ context.Context, _ *v1.GetWorkloadMetadataRequest) (*v1.GetWorkloadMetadataResponse, error) {
+func (s *fakeDeploymentService) GetDeploymentMetadata(_ context.Context, _ *v1.GetDeploymentMetadataRequest) (*v1.GetDeploymentMetadataResponse, error) {
 	return nil, errox.NotImplemented
 }
 

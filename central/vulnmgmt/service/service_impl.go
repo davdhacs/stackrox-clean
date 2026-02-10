@@ -166,7 +166,12 @@ func (s *serviceImpl) VulnMgmtExportWorkloads(req *v1.VulnMgmtExportWorkloadsReq
 	return nil
 }
 
-func (s *serviceImpl) ImageVulnerabilities(ctx context.Context, _ *v1.Empty) (*v1.ImageVulnerabilitiesResponse, error) {
+func (s *serviceImpl) ImageVulnerabilities(ctx context.Context, req *v1.ImageVulnerabilitiesRequest) (*v1.ImageVulnerabilitiesResponse, error) {
+	parsedQuery, err := search.ParseQuery(req.GetQuery(), search.MatchAllIfEmpty())
+	if err != nil {
+		return nil, errox.InvalidArgs.CausedBy(err)
+	}
+
 	tx, err := s.db.Begin(ctx)
 	if err != nil {
 		return nil, errors.Wrap(errox.ServerError, "failed to begin transaction")
@@ -182,13 +187,22 @@ func (s *serviceImpl) ImageVulnerabilities(ctx context.Context, _ *v1.Empty) (*v
 
 	images := make(map[string]*v1.ImageVulnerabilitiesResponse_Image)
 
-	err = s.images.WalkByQuery(txCtx, search.EmptyQuery(), func(img *storage.Image) error {
-		responseImage, err := s.transformImageToResponse(txCtx, img)
+	err = s.images.WalkByQuery(txCtx, parsedQuery, func(img *storage.Image) error {
+		components, err := s.getVulnerableImageComponents(img)
 		if err != nil {
 			return err
 		}
-		if responseImage != nil {
-			images[img.GetId()] = responseImage
+		if len(components) == 0 {
+			return nil
+		}
+		workloadIDs, err := s.getImageWorkloadIDs(ctx, parsedQuery, img.GetId())
+		if err != nil {
+			return errors.Wrapf(err, "failed to get workload IDs for image %s", img.GetId())
+		}
+
+		images[img.GetId()] = &v1.ImageVulnerabilitiesResponse_Image{
+			Components:  components,
+			WorkloadIds: workloadIDs,
 		}
 		return nil
 	})
@@ -205,9 +219,8 @@ func (s *serviceImpl) ImageVulnerabilities(ctx context.Context, _ *v1.Empty) (*v
 	return &v1.ImageVulnerabilitiesResponse{Images: images}, nil
 }
 
-// transformImageToResponse converts a storage.Image to the response format.
-// Returns nil if the image has no vulnerabilities to report.
-func (s *serviceImpl) transformImageToResponse(ctx context.Context, img *storage.Image) (*v1.ImageVulnerabilitiesResponse_Image, error) {
+// getVulnerableImageComponents returns vulnerable image components.
+func (s *serviceImpl) getVulnerableImageComponents(img *storage.Image) ([]*v1.ImageVulnerabilitiesResponse_Image_Component, error) {
 	scan := img.GetScan()
 	if scan == nil {
 		return nil, nil
@@ -231,19 +244,7 @@ func (s *serviceImpl) transformImageToResponse(ctx context.Context, img *storage
 		}
 	}
 
-	if len(responseComponents) == 0 {
-		return nil, nil
-	}
-
-	workloadIDs, err := s.getImageWorkloadIDs(ctx, img.GetId())
-	if err != nil {
-		return nil, errors.Wrapf(err, "failed to get workload IDs for image %s", img.GetId())
-	}
-
-	return &v1.ImageVulnerabilitiesResponse_Image{
-		Components:  responseComponents,
-		WorkloadIds: workloadIDs,
-	}, nil
+	return responseComponents, nil
 }
 
 // transformComponentToResponse converts a storage.EmbeddedImageScanComponent to
@@ -302,14 +303,16 @@ func transformVulnerabilityToResponse(vuln *storage.EmbeddedVulnerability) *v1.I
 	return vulnerability
 }
 
-func (s *serviceImpl) getImageWorkloadIDs(ctx context.Context, imageID string) ([]string, error) {
-	query := search.NewQueryBuilder().
+func (s *serviceImpl) getImageWorkloadIDs(ctx context.Context, query *v1.Query, imageID string) ([]string, error) {
+	imageQuery := search.NewQueryBuilder().
 		AddExactMatches(search.ImageSHA, imageID).
 		ProtoQuery()
 
+	combinedQuery := search.ConjunctionQuery(query, imageQuery)
+
 	workloadIDs := set.NewStringSet()
 
-	err := s.deployments.WalkByQuery(ctx, query, func(deployment *storage.Deployment) error {
+	err := s.deployments.WalkByQuery(ctx, combinedQuery, func(deployment *storage.Deployment) error {
 		for _, container := range deployment.GetContainers() {
 			if container.GetImage().GetId() == imageID {
 				workloadIDs.Add(deployment.GetId())

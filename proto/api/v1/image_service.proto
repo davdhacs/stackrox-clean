@@ -160,6 +160,8 @@ message GetImageMetadataRequest {
   // Map of image SHA to list of requested layer indices for that image.
   // If the map is empty, all images are returned.
   map<string, Layers> images = 1;
+  // Optional query.
+  string query = 2;
 }
 
 // GetImageMetadataResponse returns reduced image metadata (names and layers).

@@ -248,16 +248,12 @@ func (m *ExportDeploymentResponse) CloneMessageVT() proto.Message {
 	return m.CloneVT()
 }
 
-func (m *GetWorkloadMetadataRequest) CloneVT() *GetWorkloadMetadataRequest {
+func (m *GetDeploymentMetadataRequest) CloneVT() *GetDeploymentMetadataRequest {
 	if m == nil {
-		return (*GetWorkloadMetadataRequest)(nil)
+		return (*GetDeploymentMetadataRequest)(nil)
 	}
-	r := new(GetWorkloadMetadataRequest)
-	if rhs := m.WorkloadIds; rhs != nil {
-		tmpContainer := make([]string, len(rhs))
-		copy(tmpContainer, rhs)
-		r.WorkloadIds = tmpContainer
-	}
+	r := new(GetDeploymentMetadataRequest)
+	r.Query = m.Query
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
 		copy(r.unknownFields, m.unknownFields)
@@ -265,15 +261,15 @@ func (m *GetWorkloadMetadataRequest) CloneVT() *GetWorkloadMetadataRequest {
 	return r
 }
 
-func (m *GetWorkloadMetadataRequest) CloneMessageVT() proto.Message {
+func (m *GetDeploymentMetadataRequest) CloneMessageVT() proto.Message {
 	return m.CloneVT()
 }
 
-func (m *GetWorkloadMetadataResponse_Metadata) CloneVT() *GetWorkloadMetadataResponse_Metadata {
+func (m *GetDeploymentMetadataResponse_Metadata) CloneVT() *GetDeploymentMetadataResponse_Metadata {
 	if m == nil {
-		return (*GetWorkloadMetadataResponse_Metadata)(nil)
+		return (*GetDeploymentMetadataResponse_Metadata)(nil)
 	}
-	r := new(GetWorkloadMetadataResponse_Metadata)
+	r := new(GetDeploymentMetadataResponse_Metadata)
 	r.Name = m.Name
 	r.Type = m.Type
 	r.Cluster = m.Cluster
@@ -286,21 +282,21 @@ func (m *GetWorkloadMetadataResponse_Metadata) CloneVT() *GetWorkloadMetadataRes
 	return r
 }
 
-func (m *GetWorkloadMetadataResponse_Metadata) CloneMessageVT() proto.Message {
+func (m *GetDeploymentMetadataResponse_Metadata) CloneMessageVT() proto.Message {
 	return m.CloneVT()
 }
 
-func (m *GetWorkloadMetadataResponse) CloneVT() *GetWorkloadMetadataResponse {
+func (m *GetDeploymentMetadataResponse) CloneVT() *GetDeploymentMetadataResponse {
 	if m == nil {
-		return (*GetWorkloadMetadataResponse)(nil)
+		return (*GetDeploymentMetadataResponse)(nil)
 	}
-	r := new(GetWorkloadMetadataResponse)
-	if rhs := m.Workloads; rhs != nil {
-		tmpContainer := make(map[string]*GetWorkloadMetadataResponse_Metadata, len(rhs))
+	r := new(GetDeploymentMetadataResponse)
+	if rhs := m.Deployments; rhs != nil {
+		tmpContainer := make(map[string]*GetDeploymentMetadataResponse_Metadata, len(rhs))
 		for k, v := range rhs {
 			tmpContainer[k] = v.CloneVT()
 		}
-		r.Workloads = tmpContainer
+		r.Deployments = tmpContainer
 	}
 	if len(m.unknownFields) > 0 {
 		r.unknownFields = make([]byte, len(m.unknownFields))
@@ -309,7 +305,7 @@ func (m *GetWorkloadMetadataResponse) CloneVT() *GetWorkloadMetadataResponse {
 	return r
 }
 
-func (m *GetWorkloadMetadataResponse) CloneMessageVT() proto.Message {
+func (m *GetDeploymentMetadataResponse) CloneMessageVT() proto.Message {
 	return m.CloneVT()
 }
 
@@ -601,32 +597,26 @@ func (this *ExportDeploymentResponse) EqualMessageVT(thatMsg proto.Message) bool
 	}
 	return this.EqualVT(that)
 }
-func (this *GetWorkloadMetadataRequest) EqualVT(that *GetWorkloadMetadataRequest) bool {
+func (this *GetDeploymentMetadataRequest) EqualVT(that *GetDeploymentMetadataRequest) bool {
 	if this == that {
 		return true
 	} else if this == nil || that == nil {
 		return false
 	}
-	if len(this.WorkloadIds) != len(that.WorkloadIds) {
+	if this.Query != that.Query {
 		return false
-	}
-	for i, vx := range this.WorkloadIds {
-		vy := that.WorkloadIds[i]
-		if vx != vy {
-			return false
-		}
 	}
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
-func (this *GetWorkloadMetadataRequest) EqualMessageVT(thatMsg proto.Message) bool {
-	that, ok := thatMsg.(*GetWorkloadMetadataRequest)
+func (this *GetDeploymentMetadataRequest) EqualMessageVT(thatMsg proto.Message) bool {
+	that, ok := thatMsg.(*GetDeploymentMetadataRequest)
 	if !ok {
 		return false
 	}
 	return this.EqualVT(that)
 }
-func (this *GetWorkloadMetadataResponse_Metadata) EqualVT(that *GetWorkloadMetadataResponse_Metadata) bool {
+func (this *GetDeploymentMetadataResponse_Metadata) EqualVT(that *GetDeploymentMetadataResponse_Metadata) bool {
 	if this == that {
 		return true
 	} else if this == nil || that == nil {
@@ -650,33 +640,33 @@ func (this *GetWorkloadMetadataResponse_Metadata) EqualVT(that *GetWorkloadMetad
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
-func (this *GetWorkloadMetadataResponse_Metadata) EqualMessageVT(thatMsg proto.Message) bool {
-	that, ok := thatMsg.(*GetWorkloadMetadataResponse_Metadata)
+func (this *GetDeploymentMetadataResponse_Metadata) EqualMessageVT(thatMsg proto.Message) bool {
+	that, ok := thatMsg.(*GetDeploymentMetadataResponse_Metadata)
 	if !ok {
 		return false
 	}
 	return this.EqualVT(that)
 }
-func (this *GetWorkloadMetadataResponse) EqualVT(that *GetWorkloadMetadataResponse) bool {
+func (this *GetDeploymentMetadataResponse) EqualVT(that *GetDeploymentMetadataResponse) bool {
 	if this == that {
 		return true
 	} else if this == nil || that == nil {
 		return false
 	}
-	if len(this.Workloads) != len(that.Workloads) {
+	if len(this.Deployments) != len(that.Deployments) {
 		return false
 	}
-	for i, vx := range this.Workloads {
-		vy, ok := that.Workloads[i]
+	for i, vx := range this.Deployments {
+		vy, ok := that.Deployments[i]
 		if !ok {
 			return false
 		}
 		if p, q := vx, vy; p != q {
 			if p == nil {
-				p = &GetWorkloadMetadataResponse_Metadata{}
+				p = &GetDeploymentMetadataResponse_Metadata{}
 			}
 			if q == nil {
-				q = &GetWorkloadMetadataResponse_Metadata{}
+				q = &GetDeploymentMetadataResponse_Metadata{}
 			}
 			if !p.EqualVT(q) {
 				return false
@@ -686,8 +676,8 @@ func (this *GetWorkloadMetadataResponse) EqualVT(that *GetWorkloadMetadataRespon
 	return string(this.unknownFields) == string(that.unknownFields)
 }
 
-func (this *GetWorkloadMetadataResponse) EqualMessageVT(thatMsg proto.Message) bool {
-	that, ok := thatMsg.(*GetWorkloadMetadataResponse)
+func (this *GetDeploymentMetadataResponse) EqualMessageVT(thatMsg proto.Message) bool {
+	that, ok := thatMsg.(*GetDeploymentMetadataResponse)
 	if !ok {
 		return false
 	}
@@ -1195,7 +1185,7 @@ func (m *ExportDeploymentResponse) MarshalToSizedBufferVT(dAtA []byte) (int, err
 	return len(dAtA) - i, nil
 }
 
-func (m *GetWorkloadMetadataRequest) MarshalVT() (dAtA []byte, err error) {
+func (m *GetDeploymentMetadataRequest) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1208,12 +1198,12 @@ func (m *GetWorkloadMetadataRequest) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *GetWorkloadMetadataRequest) MarshalToVT(dAtA []byte) (int, error) {
+func (m *GetDeploymentMetadataRequest) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *GetWorkloadMetadataRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *GetDeploymentMetadataRequest) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1225,19 +1215,17 @@ func (m *GetWorkloadMetadataRequest) MarshalToSizedBufferVT(dAtA []byte) (int, e
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.WorkloadIds) > 0 {
-		for iNdEx := len(m.WorkloadIds) - 1; iNdEx >= 0; iNdEx-- {
-			i -= len(m.WorkloadIds[iNdEx])
-			copy(dAtA[i:], m.WorkloadIds[iNdEx])
-			i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.WorkloadIds[iNdEx])))
-			i--
-			dAtA[i] = 0xa
-		}
+	if len(m.Query) > 0 {
+		i -= len(m.Query)
+		copy(dAtA[i:], m.Query)
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.Query)))
+		i--
+		dAtA[i] = 0xa
 	}
 	return len(dAtA) - i, nil
 }
 
-func (m *GetWorkloadMetadataResponse_Metadata) MarshalVT() (dAtA []byte, err error) {
+func (m *GetDeploymentMetadataResponse_Metadata) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1250,12 +1238,12 @@ func (m *GetWorkloadMetadataResponse_Metadata) MarshalVT() (dAtA []byte, err err
 	return dAtA[:n], nil
 }
 
-func (m *GetWorkloadMetadataResponse_Metadata) MarshalToVT(dAtA []byte) (int, error) {
+func (m *GetDeploymentMetadataResponse_Metadata) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *GetWorkloadMetadataResponse_Metadata) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *GetDeploymentMetadataResponse_Metadata) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1308,7 +1296,7 @@ func (m *GetWorkloadMetadataResponse_Metadata) MarshalToSizedBufferVT(dAtA []byt
 	return len(dAtA) - i, nil
 }
 
-func (m *GetWorkloadMetadataResponse) MarshalVT() (dAtA []byte, err error) {
+func (m *GetDeploymentMetadataResponse) MarshalVT() (dAtA []byte, err error) {
 	if m == nil {
 		return nil, nil
 	}
@@ -1321,12 +1309,12 @@ func (m *GetWorkloadMetadataResponse) MarshalVT() (dAtA []byte, err error) {
 	return dAtA[:n], nil
 }
 
-func (m *GetWorkloadMetadataResponse) MarshalToVT(dAtA []byte) (int, error) {
+func (m *GetDeploymentMetadataResponse) MarshalToVT(dAtA []byte) (int, error) {
 	size := m.SizeVT()
 	return m.MarshalToSizedBufferVT(dAtA[:size])
 }
 
-func (m *GetWorkloadMetadataResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
+func (m *GetDeploymentMetadataResponse) MarshalToSizedBufferVT(dAtA []byte) (int, error) {
 	if m == nil {
 		return 0, nil
 	}
@@ -1338,9 +1326,9 @@ func (m *GetWorkloadMetadataResponse) MarshalToSizedBufferVT(dAtA []byte) (int, 
 		i -= len(m.unknownFields)
 		copy(dAtA[i:], m.unknownFields)
 	}
-	if len(m.Workloads) > 0 {
-		for k := range m.Workloads {
-			v := m.Workloads[k]
+	if len(m.Deployments) > 0 {
+		for k := range m.Deployments {
+			v := m.Deployments[k]
 			baseI := i
 			size, err := v.MarshalToSizedBufferVT(dAtA[:i])
 			if err != nil {
@@ -1558,23 +1546,21 @@ func (m *ExportDeploymentResponse) SizeVT() (n int) {
 	return n
 }
 
-func (m *GetWorkloadMetadataRequest) SizeVT() (n int) {
+func (m *GetDeploymentMetadataRequest) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.WorkloadIds) > 0 {
-		for _, s := range m.WorkloadIds {
-			l = len(s)
-			n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
-		}
+	l = len(m.Query)
+	if l > 0 {
+		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
 	n += len(m.unknownFields)
 	return n
 }
 
-func (m *GetWorkloadMetadataResponse_Metadata) SizeVT() (n int) {
+func (m *GetDeploymentMetadataResponse_Metadata) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
@@ -1603,14 +1589,14 @@ func (m *GetWorkloadMetadataResponse_Metadata) SizeVT() (n int) {
 	return n
 }
 
-func (m *GetWorkloadMetadataResponse) SizeVT() (n int) {
+func (m *GetDeploymentMetadataResponse) SizeVT() (n int) {
 	if m == nil {
 		return 0
 	}
 	var l int
 	_ = l
-	if len(m.Workloads) > 0 {
-		for k, v := range m.Workloads {
+	if len(m.Deployments) > 0 {
+		for k, v := range m.Deployments {
 			_ = k
 			_ = v
 			l = 0
@@ -2642,7 +2628,7 @@ func (m *ExportDeploymentResponse) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *GetWorkloadMetadataRequest) UnmarshalVT(dAtA []byte) error {
+func (m *GetDeploymentMetadataRequest) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2665,15 +2651,15 @@ func (m *GetWorkloadMetadataRequest) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetWorkloadMetadataRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetDeploymentMetadataRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetWorkloadMetadataRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetDeploymentMetadataRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field WorkloadIds", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Query", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -2701,7 +2687,7 @@ func (m *GetWorkloadMetadataRequest) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			m.WorkloadIds = append(m.WorkloadIds, string(dAtA[iNdEx:postIndex]))
+			m.Query = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -2725,7 +2711,7 @@ func (m *GetWorkloadMetadataRequest) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *GetWorkloadMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
+func (m *GetDeploymentMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2748,10 +2734,10 @@ func (m *GetWorkloadMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetWorkloadMetadataResponse_Metadata: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetDeploymentMetadataResponse_Metadata: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetWorkloadMetadataResponse_Metadata: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetDeploymentMetadataResponse_Metadata: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -2924,7 +2910,7 @@ func (m *GetWorkloadMetadataResponse_Metadata) UnmarshalVT(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *GetWorkloadMetadataResponse) UnmarshalVT(dAtA []byte) error {
+func (m *GetDeploymentMetadataResponse) UnmarshalVT(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -2947,15 +2933,15 @@ func (m *GetWorkloadMetadataResponse) UnmarshalVT(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetWorkloadMetadataResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetDeploymentMetadataResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetWorkloadMetadataResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetDeploymentMetadataResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Workloads", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Deployments", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -2982,11 +2968,11 @@ func (m *GetWorkloadMetadataResponse) UnmarshalVT(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Workloads == nil {
-				m.Workloads = make(map[string]*GetWorkloadMetadataResponse_Metadata)
+			if m.Deployments == nil {
+				m.Deployments = make(map[string]*GetDeploymentMetadataResponse_Metadata)
 			}
 			var mapkey string
-			var mapvalue *GetWorkloadMetadataResponse_Metadata
+			var mapvalue *GetDeploymentMetadataResponse_Metadata
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -3060,7 +3046,7 @@ func (m *GetWorkloadMetadataResponse) UnmarshalVT(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &GetWorkloadMetadataResponse_Metadata{}
+					mapvalue = &GetDeploymentMetadataResponse_Metadata{}
 					if err := mapvalue.UnmarshalVT(dAtA[iNdEx:postmsgIndex]); err != nil {
 						return err
 					}
@@ -3080,7 +3066,7 @@ func (m *GetWorkloadMetadataResponse) UnmarshalVT(dAtA []byte) error {
 					iNdEx += skippy
 				}
 			}
-			m.Workloads[mapkey] = mapvalue
+			m.Deployments[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -4136,7 +4122,7 @@ func (m *ExportDeploymentResponse) UnmarshalVTUnsafe(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *GetWorkloadMetadataRequest) UnmarshalVTUnsafe(dAtA []byte) error {
+func (m *GetDeploymentMetadataRequest) UnmarshalVTUnsafe(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4159,15 +4145,15 @@ func (m *GetWorkloadMetadataRequest) UnmarshalVTUnsafe(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetWorkloadMetadataRequest: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetDeploymentMetadataRequest: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetWorkloadMetadataRequest: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetDeploymentMetadataRequest: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field WorkloadIds", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Query", wireType)
 			}
 			var stringLen uint64
 			for shift := uint(0); ; shift += 7 {
@@ -4199,7 +4185,7 @@ func (m *GetWorkloadMetadataRequest) UnmarshalVTUnsafe(dAtA []byte) error {
 			if intStringLen > 0 {
 				stringValue = unsafe.String(&dAtA[iNdEx], intStringLen)
 			}
-			m.WorkloadIds = append(m.WorkloadIds, stringValue)
+			m.Query = stringValue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex
@@ -4223,7 +4209,7 @@ func (m *GetWorkloadMetadataRequest) UnmarshalVTUnsafe(dAtA []byte) error {
 	}
 	return nil
 }
-func (m *GetWorkloadMetadataResponse_Metadata) UnmarshalVTUnsafe(dAtA []byte) error {
+func (m *GetDeploymentMetadataResponse_Metadata) UnmarshalVTUnsafe(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4246,10 +4232,10 @@ func (m *GetWorkloadMetadataResponse_Metadata) UnmarshalVTUnsafe(dAtA []byte) er
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetWorkloadMetadataResponse_Metadata: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetDeploymentMetadataResponse_Metadata: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetWorkloadMetadataResponse_Metadata: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetDeploymentMetadataResponse_Metadata: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
@@ -4438,7 +4424,7 @@ func (m *GetWorkloadMetadataResponse_Metadata) UnmarshalVTUnsafe(dAtA []byte) er
 	}
 	return nil
 }
-func (m *GetWorkloadMetadataResponse) UnmarshalVTUnsafe(dAtA []byte) error {
+func (m *GetDeploymentMetadataResponse) UnmarshalVTUnsafe(dAtA []byte) error {
 	l := len(dAtA)
 	iNdEx := 0
 	for iNdEx < l {
@@ -4461,15 +4447,15 @@ func (m *GetWorkloadMetadataResponse) UnmarshalVTUnsafe(dAtA []byte) error {
 		fieldNum := int32(wire >> 3)
 		wireType := int(wire & 0x7)
 		if wireType == 4 {
-			return fmt.Errorf("proto: GetWorkloadMetadataResponse: wiretype end group for non-group")
+			return fmt.Errorf("proto: GetDeploymentMetadataResponse: wiretype end group for non-group")
 		}
 		if fieldNum <= 0 {
-			return fmt.Errorf("proto: GetWorkloadMetadataResponse: illegal tag %d (wire type %d)", fieldNum, wire)
+			return fmt.Errorf("proto: GetDeploymentMetadataResponse: illegal tag %d (wire type %d)", fieldNum, wire)
 		}
 		switch fieldNum {
 		case 1:
 			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field Workloads", wireType)
+				return fmt.Errorf("proto: wrong wireType = %d for field Deployments", wireType)
 			}
 			var msglen int
 			for shift := uint(0); ; shift += 7 {
@@ -4496,11 +4482,11 @@ func (m *GetWorkloadMetadataResponse) UnmarshalVTUnsafe(dAtA []byte) error {
 			if postIndex > l {
 				return io.ErrUnexpectedEOF
 			}
-			if m.Workloads == nil {
-				m.Workloads = make(map[string]*GetWorkloadMetadataResponse_Metadata)
+			if m.Deployments == nil {
+				m.Deployments = make(map[string]*GetDeploymentMetadataResponse_Metadata)
 			}
 			var mapkey string
-			var mapvalue *GetWorkloadMetadataResponse_Metadata
+			var mapvalue *GetDeploymentMetadataResponse_Metadata
 			for iNdEx < postIndex {
 				entryPreIndex := iNdEx
 				var wire uint64
@@ -4578,7 +4564,7 @@ func (m *GetWorkloadMetadataResponse) UnmarshalVTUnsafe(dAtA []byte) error {
 					if postmsgIndex > l {
 						return io.ErrUnexpectedEOF
 					}
-					mapvalue = &GetWorkloadMetadataResponse_Metadata{}
+					mapvalue = &GetDeploymentMetadataResponse_Metadata{}
 					if err := mapvalue.UnmarshalVTUnsafe(dAtA[iNdEx:postmsgIndex]); err != nil {
 						return err
 					}
@@ -4598,7 +4584,7 @@ func (m *GetWorkloadMetadataResponse) UnmarshalVTUnsafe(dAtA []byte) error {
 					iNdEx += skippy
 				}
 			}
-			m.Workloads[mapkey] = mapvalue
+			m.Deployments[mapkey] = mapvalue
 			iNdEx = postIndex
 		default:
 			iNdEx = preIndex

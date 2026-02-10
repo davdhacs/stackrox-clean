@@ -1122,7 +1122,9 @@ type GetImageMetadataRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Map of image SHA to list of requested layer indices for that image.
 	// If the map is empty, all images are returned.
-	Images        map[string]*GetImageMetadataRequest_Layers `protobuf:"bytes,1,rep,name=images,proto3" json:"images,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	Images map[string]*GetImageMetadataRequest_Layers `protobuf:"bytes,1,rep,name=images,proto3" json:"images,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Optional query.
+	Query         string `protobuf:"bytes,2,opt,name=query,proto3" json:"query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -1162,6 +1164,13 @@ func (x *GetImageMetadataRequest) GetImages() map[string]*GetImageMetadataReques
 		return x.Images
 	}
 	return nil
+}
+
+func (x *GetImageMetadataRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
 }
 
 // GetImageMetadataResponse returns reduced image metadata (names and layers).
@@ -1501,9 +1510,10 @@ const file_api_v1_image_service_proto_rawDesc = "" +
 	"\atimeout\x18\x01 \x01(\x05R\atimeout\x12\x14\n" +
 	"\x05query\x18\x02 \x01(\tR\x05query\";\n" +
 	"\x13ExportImageResponse\x12$\n" +
-	"\x05image\x18\x01 \x01(\v2\x0e.storage.ImageR\x05image\"\xdb\x01\n" +
+	"\x05image\x18\x01 \x01(\v2\x0e.storage.ImageR\x05image\"\xf1\x01\n" +
 	"\x17GetImageMetadataRequest\x12?\n" +
-	"\x06images\x18\x01 \x03(\v2'.v1.GetImageMetadataRequest.ImagesEntryR\x06images\x1a \n" +
+	"\x06images\x18\x01 \x03(\v2'.v1.GetImageMetadataRequest.ImagesEntryR\x06images\x12\x14\n" +
+	"\x05query\x18\x02 \x01(\tR\x05query\x1a \n" +
 	"\x06Layers\x12\x16\n" +
 	"\x06layers\x18\x01 \x03(\x05R\x06layers\x1a]\n" +
 	"\vImagesEntry\x12\x10\n" +

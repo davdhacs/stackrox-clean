@@ -355,28 +355,28 @@ func (x *ExportDeploymentResponse) GetDeployment() *storage.Deployment {
 	return nil
 }
 
-// GetWorkloadMetadataRequest requests reduced workload metadata for specified deployments.
-type GetWorkloadMetadataRequest struct {
+// GetDeploymentMetadataRequest requests reduced deployment metadata.
+type GetDeploymentMetadataRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	WorkloadIds   []string               `protobuf:"bytes,1,rep,name=workload_ids,json=workloadIds,proto3" json:"workload_ids,omitempty"`
+	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetWorkloadMetadataRequest) Reset() {
-	*x = GetWorkloadMetadataRequest{}
+func (x *GetDeploymentMetadataRequest) Reset() {
+	*x = GetDeploymentMetadataRequest{}
 	mi := &file_api_v1_deployment_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetWorkloadMetadataRequest) String() string {
+func (x *GetDeploymentMetadataRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetWorkloadMetadataRequest) ProtoMessage() {}
+func (*GetDeploymentMetadataRequest) ProtoMessage() {}
 
-func (x *GetWorkloadMetadataRequest) ProtoReflect() protoreflect.Message {
+func (x *GetDeploymentMetadataRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_api_v1_deployment_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -388,41 +388,41 @@ func (x *GetWorkloadMetadataRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetWorkloadMetadataRequest.ProtoReflect.Descriptor instead.
-func (*GetWorkloadMetadataRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetDeploymentMetadataRequest.ProtoReflect.Descriptor instead.
+func (*GetDeploymentMetadataRequest) Descriptor() ([]byte, []int) {
 	return file_api_v1_deployment_service_proto_rawDescGZIP(), []int{7}
 }
 
-func (x *GetWorkloadMetadataRequest) GetWorkloadIds() []string {
+func (x *GetDeploymentMetadataRequest) GetQuery() string {
 	if x != nil {
-		return x.WorkloadIds
+		return x.Query
 	}
-	return nil
+	return ""
 }
 
-// GetWorkloadMetadataResponse returns reduced workload metadata.
-type GetWorkloadMetadataResponse struct {
+// GetDeploymentMetadataResponse returns reduced deployment metadata.
+type GetDeploymentMetadataResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// Map of workload ID to metadata.
-	Workloads     map[string]*GetWorkloadMetadataResponse_Metadata `protobuf:"bytes,1,rep,name=workloads,proto3" json:"workloads,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// Map of deployment ID to metadata.
+	Deployments   map[string]*GetDeploymentMetadataResponse_Metadata `protobuf:"bytes,1,rep,name=deployments,proto3" json:"deployments,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
-func (x *GetWorkloadMetadataResponse) Reset() {
-	*x = GetWorkloadMetadataResponse{}
+func (x *GetDeploymentMetadataResponse) Reset() {
+	*x = GetDeploymentMetadataResponse{}
 	mi := &file_api_v1_deployment_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetWorkloadMetadataResponse) String() string {
+func (x *GetDeploymentMetadataResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetWorkloadMetadataResponse) ProtoMessage() {}
+func (*GetDeploymentMetadataResponse) ProtoMessage() {}
 
-func (x *GetWorkloadMetadataResponse) ProtoReflect() protoreflect.Message {
+func (x *GetDeploymentMetadataResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_api_v1_deployment_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -434,14 +434,14 @@ func (x *GetWorkloadMetadataResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetWorkloadMetadataResponse.ProtoReflect.Descriptor instead.
-func (*GetWorkloadMetadataResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetDeploymentMetadataResponse.ProtoReflect.Descriptor instead.
+func (*GetDeploymentMetadataResponse) Descriptor() ([]byte, []int) {
 	return file_api_v1_deployment_service_proto_rawDescGZIP(), []int{8}
 }
 
-func (x *GetWorkloadMetadataResponse) GetWorkloads() map[string]*GetWorkloadMetadataResponse_Metadata {
+func (x *GetDeploymentMetadataResponse) GetDeployments() map[string]*GetDeploymentMetadataResponse_Metadata {
 	if x != nil {
-		return x.Workloads
+		return x.Deployments
 	}
 	return nil
 }
@@ -542,7 +542,7 @@ func (x *ListDeploymentsWithProcessInfoResponse_DeploymentWithProcessInfo) GetBa
 	return nil
 }
 
-type GetWorkloadMetadataResponse_Metadata struct {
+type GetDeploymentMetadataResponse_Metadata struct {
 	state             protoimpl.MessageState `protogen:"open.v1"`
 	Name              string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	Type              string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
@@ -553,20 +553,20 @@ type GetWorkloadMetadataResponse_Metadata struct {
 	sizeCache         protoimpl.SizeCache
 }
 
-func (x *GetWorkloadMetadataResponse_Metadata) Reset() {
-	*x = GetWorkloadMetadataResponse_Metadata{}
+func (x *GetDeploymentMetadataResponse_Metadata) Reset() {
+	*x = GetDeploymentMetadataResponse_Metadata{}
 	mi := &file_api_v1_deployment_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
 
-func (x *GetWorkloadMetadataResponse_Metadata) String() string {
+func (x *GetDeploymentMetadataResponse_Metadata) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetWorkloadMetadataResponse_Metadata) ProtoMessage() {}
+func (*GetDeploymentMetadataResponse_Metadata) ProtoMessage() {}
 
-func (x *GetWorkloadMetadataResponse_Metadata) ProtoReflect() protoreflect.Message {
+func (x *GetDeploymentMetadataResponse_Metadata) ProtoReflect() protoreflect.Message {
 	mi := &file_api_v1_deployment_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -578,40 +578,40 @@ func (x *GetWorkloadMetadataResponse_Metadata) ProtoReflect() protoreflect.Messa
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetWorkloadMetadataResponse_Metadata.ProtoReflect.Descriptor instead.
-func (*GetWorkloadMetadataResponse_Metadata) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetDeploymentMetadataResponse_Metadata.ProtoReflect.Descriptor instead.
+func (*GetDeploymentMetadataResponse_Metadata) Descriptor() ([]byte, []int) {
 	return file_api_v1_deployment_service_proto_rawDescGZIP(), []int{8, 0}
 }
 
-func (x *GetWorkloadMetadataResponse_Metadata) GetName() string {
+func (x *GetDeploymentMetadataResponse_Metadata) GetName() string {
 	if x != nil {
 		return x.Name
 	}
 	return ""
 }
 
-func (x *GetWorkloadMetadataResponse_Metadata) GetType() string {
+func (x *GetDeploymentMetadataResponse_Metadata) GetType() string {
 	if x != nil {
 		return x.Type
 	}
 	return ""
 }
 
-func (x *GetWorkloadMetadataResponse_Metadata) GetCluster() string {
+func (x *GetDeploymentMetadataResponse_Metadata) GetCluster() string {
 	if x != nil {
 		return x.Cluster
 	}
 	return ""
 }
 
-func (x *GetWorkloadMetadataResponse_Metadata) GetNamespace() string {
+func (x *GetDeploymentMetadataResponse_Metadata) GetNamespace() string {
 	if x != nil {
 		return x.Namespace
 	}
 	return ""
 }
 
-func (x *GetWorkloadMetadataResponse_Metadata) GetPlatformComponent() bool {
+func (x *GetDeploymentMetadataResponse_Metadata) GetPlatformComponent() bool {
 	if x != nil {
 		return x.PlatformComponent
 	}
@@ -653,20 +653,20 @@ const file_api_v1_deployment_service_proto_rawDesc = "" +
 	"\x18ExportDeploymentResponse\x123\n" +
 	"\n" +
 	"deployment\x18\x01 \x01(\v2\x13.storage.DeploymentR\n" +
-	"deployment\"?\n" +
-	"\x1aGetWorkloadMetadataRequest\x12!\n" +
-	"\fworkload_ids\x18\x01 \x03(\tR\vworkloadIds\"\xef\x02\n" +
-	"\x1bGetWorkloadMetadataResponse\x12L\n" +
-	"\tworkloads\x18\x01 \x03(\v2..v1.GetWorkloadMetadataResponse.WorkloadsEntryR\tworkloads\x1a\x99\x01\n" +
+	"deployment\"4\n" +
+	"\x1cGetDeploymentMetadataRequest\x12\x14\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\"\xfd\x02\n" +
+	"\x1dGetDeploymentMetadataResponse\x12T\n" +
+	"\vdeployments\x18\x01 \x03(\v22.v1.GetDeploymentMetadataResponse.DeploymentsEntryR\vdeployments\x1a\x99\x01\n" +
 	"\bMetadata\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x12\n" +
 	"\x04type\x18\x02 \x01(\tR\x04type\x12\x18\n" +
 	"\acluster\x18\x03 \x01(\tR\acluster\x12\x1c\n" +
 	"\tnamespace\x18\x04 \x01(\tR\tnamespace\x12-\n" +
-	"\x12platform_component\x18\x05 \x01(\bR\x11platformComponent\x1af\n" +
-	"\x0eWorkloadsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12>\n" +
-	"\x05value\x18\x02 \x01(\v2(.v1.GetWorkloadMetadataResponse.MetadataR\x05value:\x028\x012\xe3\x06\n" +
+	"\x12platform_component\x18\x05 \x01(\bR\x11platformComponent\x1aj\n" +
+	"\x10DeploymentsEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12@\n" +
+	"\x05value\x18\x02 \x01(\v2*.v1.GetDeploymentMetadataResponse.MetadataR\x05value:\x028\x012\xec\x06\n" +
 	"\x11DeploymentService\x12T\n" +
 	"\rGetDeployment\x12\x10.v1.ResourceByID\x1a\x13.storage.Deployment\"\x1c\x82\xd3\xe4\x93\x02\x16\x12\x14/v1/deployments/{id}\x12r\n" +
 	"\x15GetDeploymentWithRisk\x12\x10.v1.ResourceByID\x1a!.v1.GetDeploymentWithRiskResponse\"$\x82\xd3\xe4\x93\x02\x1e\x12\x1c/v1/deploymentswithrisk/{id}\x12\\\n" +
@@ -674,8 +674,8 @@ const file_api_v1_deployment_service_proto_rawDesc = "" +
 	"\x0fListDeployments\x12\f.v1.RawQuery\x1a\x1b.v1.ListDeploymentsResponse\"\x17\x82\xd3\xe4\x93\x02\x11\x12\x0f/v1/deployments\x12\x82\x01\n" +
 	"\x1eListDeploymentsWithProcessInfo\x12\f.v1.RawQuery\x1a*.v1.ListDeploymentsWithProcessInfoResponse\"&\x82\xd3\xe4\x93\x02 \x12\x1e/v1/deploymentswithprocessinfo\x12]\n" +
 	"\tGetLabels\x12\t.v1.Empty\x1a\x1c.v1.DeploymentLabelsResponse\"'\x82\xd3\xe4\x93\x02!\x12\x1f/v1/deployments/metadata/labels\x12p\n" +
-	"\x11ExportDeployments\x12\x1b.v1.ExportDeploymentRequest\x1a\x1c.v1.ExportDeploymentResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/export/deployments0\x01\x12y\n" +
-	"\x13GetWorkloadMetadata\x12\x1e.v1.GetWorkloadMetadataRequest\x1a\x1f.v1.GetWorkloadMetadataResponse\"!\x82\xd3\xe4\x93\x02\x1b:\x01*\"\x16/v1/workloads/metadataB'\n" +
+	"\x11ExportDeployments\x12\x1b.v1.ExportDeploymentRequest\x1a\x1c.v1.ExportDeploymentResponse\"\x1e\x82\xd3\xe4\x93\x02\x18\x12\x16/v1/export/deployments0\x01\x12\x81\x01\n" +
+	"\x15GetDeploymentMetadata\x12 .v1.GetDeploymentMetadataRequest\x1a!.v1.GetDeploymentMetadataResponse\"#\x82\xd3\xe4\x93\x02\x1d:\x01*\"\x18/v1/deployments/metadataB'\n" +
 	"\x18io.stackrox.proto.api.v1Z\v./api/v1;v1X\x03b\x06proto3"
 
 var (
@@ -699,13 +699,13 @@ var file_api_v1_deployment_service_proto_goTypes = []any{
 	(*GetDeploymentWithRiskResponse)(nil),          // 4: v1.GetDeploymentWithRiskResponse
 	(*ExportDeploymentRequest)(nil),                // 5: v1.ExportDeploymentRequest
 	(*ExportDeploymentResponse)(nil),               // 6: v1.ExportDeploymentResponse
-	(*GetWorkloadMetadataRequest)(nil),             // 7: v1.GetWorkloadMetadataRequest
-	(*GetWorkloadMetadataResponse)(nil),            // 8: v1.GetWorkloadMetadataResponse
+	(*GetDeploymentMetadataRequest)(nil),           // 7: v1.GetDeploymentMetadataRequest
+	(*GetDeploymentMetadataResponse)(nil),          // 8: v1.GetDeploymentMetadataResponse
 	(*DeploymentLabelsResponse_LabelValues)(nil),   // 9: v1.DeploymentLabelsResponse.LabelValues
 	nil, // 10: v1.DeploymentLabelsResponse.LabelsEntry
 	(*ListDeploymentsWithProcessInfoResponse_DeploymentWithProcessInfo)(nil), // 11: v1.ListDeploymentsWithProcessInfoResponse.DeploymentWithProcessInfo
-	(*GetWorkloadMetadataResponse_Metadata)(nil),                             // 12: v1.GetWorkloadMetadataResponse.Metadata
-	nil,                            // 13: v1.GetWorkloadMetadataResponse.WorkloadsEntry
+	(*GetDeploymentMetadataResponse_Metadata)(nil),                           // 12: v1.GetDeploymentMetadataResponse.Metadata
+	nil,                            // 13: v1.GetDeploymentMetadataResponse.DeploymentsEntry
 	(*storage.ListDeployment)(nil), // 14: storage.ListDeployment
 	(*storage.Deployment)(nil),     // 15: storage.Deployment
 	(*storage.Risk)(nil),           // 16: storage.Risk
@@ -721,11 +721,11 @@ var file_api_v1_deployment_service_proto_depIdxs = []int32{
 	15, // 3: v1.GetDeploymentWithRiskResponse.deployment:type_name -> storage.Deployment
 	16, // 4: v1.GetDeploymentWithRiskResponse.risk:type_name -> storage.Risk
 	15, // 5: v1.ExportDeploymentResponse.deployment:type_name -> storage.Deployment
-	13, // 6: v1.GetWorkloadMetadataResponse.workloads:type_name -> v1.GetWorkloadMetadataResponse.WorkloadsEntry
+	13, // 6: v1.GetDeploymentMetadataResponse.deployments:type_name -> v1.GetDeploymentMetadataResponse.DeploymentsEntry
 	9,  // 7: v1.DeploymentLabelsResponse.LabelsEntry.value:type_name -> v1.DeploymentLabelsResponse.LabelValues
 	14, // 8: v1.ListDeploymentsWithProcessInfoResponse.DeploymentWithProcessInfo.deployment:type_name -> storage.ListDeployment
 	17, // 9: v1.ListDeploymentsWithProcessInfoResponse.DeploymentWithProcessInfo.baseline_statuses:type_name -> storage.ContainerNameAndBaselineStatus
-	12, // 10: v1.GetWorkloadMetadataResponse.WorkloadsEntry.value:type_name -> v1.GetWorkloadMetadataResponse.Metadata
+	12, // 10: v1.GetDeploymentMetadataResponse.DeploymentsEntry.value:type_name -> v1.GetDeploymentMetadataResponse.Metadata
 	18, // 11: v1.DeploymentService.GetDeployment:input_type -> v1.ResourceByID
 	18, // 12: v1.DeploymentService.GetDeploymentWithRisk:input_type -> v1.ResourceByID
 	19, // 13: v1.DeploymentService.CountDeployments:input_type -> v1.RawQuery
@@ -733,7 +733,7 @@ var file_api_v1_deployment_service_proto_depIdxs = []int32{
 	19, // 15: v1.DeploymentService.ListDeploymentsWithProcessInfo:input_type -> v1.RawQuery
 	20, // 16: v1.DeploymentService.GetLabels:input_type -> v1.Empty
 	5,  // 17: v1.DeploymentService.ExportDeployments:input_type -> v1.ExportDeploymentRequest
-	7,  // 18: v1.DeploymentService.GetWorkloadMetadata:input_type -> v1.GetWorkloadMetadataRequest
+	7,  // 18: v1.DeploymentService.GetDeploymentMetadata:input_type -> v1.GetDeploymentMetadataRequest
 	15, // 19: v1.DeploymentService.GetDeployment:output_type -> storage.Deployment
 	4,  // 20: v1.DeploymentService.GetDeploymentWithRisk:output_type -> v1.GetDeploymentWithRiskResponse
 	2,  // 21: v1.DeploymentService.CountDeployments:output_type -> v1.CountDeploymentsResponse
@@ -741,7 +741,7 @@ var file_api_v1_deployment_service_proto_depIdxs = []int32{
 	3,  // 23: v1.DeploymentService.ListDeploymentsWithProcessInfo:output_type -> v1.ListDeploymentsWithProcessInfoResponse
 	0,  // 24: v1.DeploymentService.GetLabels:output_type -> v1.DeploymentLabelsResponse
 	6,  // 25: v1.DeploymentService.ExportDeployments:output_type -> v1.ExportDeploymentResponse
-	8,  // 26: v1.DeploymentService.GetWorkloadMetadata:output_type -> v1.GetWorkloadMetadataResponse
+	8,  // 26: v1.DeploymentService.GetDeploymentMetadata:output_type -> v1.GetDeploymentMetadataResponse
 	19, // [19:27] is the sub-list for method output_type
 	11, // [11:19] is the sub-list for method input_type
 	11, // [11:11] is the sub-list for extension type_name
