@@ -664,13 +664,20 @@ copy-go-binaries-to-image-dir:
 	cp bin/linux_$(GOARCH)/central image/rhel/bin/central
 	cp bin/linux_$(GOARCH)/config-controller image/rhel/bin/config-controller
 ifdef CI
-	cp bin/linux_amd64/roxctl image/rhel/bin/roxctl-linux-amd64
-	cp bin/linux_arm64/roxctl image/rhel/bin/roxctl-linux-arm64
-	cp bin/linux_ppc64le/roxctl image/rhel/bin/roxctl-linux-ppc64le
-	cp bin/linux_s390x/roxctl image/rhel/bin/roxctl-linux-s390x
-	cp bin/darwin_amd64/roxctl image/rhel/bin/roxctl-darwin-amd64
-	cp bin/darwin_arm64/roxctl image/rhel/bin/roxctl-darwin-arm64
-	cp bin/windows_amd64/roxctl.exe image/rhel/bin/roxctl-windows-amd64.exe
+	@# Copy all available roxctl binaries. Not all arches are built on every
+	@# PR — ppc64le, s390x, darwin, windows require the ci-build-all-arch label.
+	for f in \
+		bin/linux_amd64/roxctl:image/rhel/bin/roxctl-linux-amd64 \
+		bin/linux_arm64/roxctl:image/rhel/bin/roxctl-linux-arm64 \
+		bin/linux_ppc64le/roxctl:image/rhel/bin/roxctl-linux-ppc64le \
+		bin/linux_s390x/roxctl:image/rhel/bin/roxctl-linux-s390x \
+		bin/darwin_amd64/roxctl:image/rhel/bin/roxctl-darwin-amd64 \
+		bin/darwin_arm64/roxctl:image/rhel/bin/roxctl-darwin-arm64 \
+		bin/windows_amd64/roxctl.exe:image/rhel/bin/roxctl-windows-amd64.exe \
+	; do \
+		src="$${f%%:*}"; dst="$${f##*:}"; \
+		if [ -f "$$src" ]; then cp "$$src" "$$dst"; else echo "Skipping $$src (not built)"; fi; \
+	done
 else
 ifneq ($(HOST_OS),linux)
 	cp bin/linux_$(GOARCH)/roxctl image/rhel/bin/roxctl-linux-$(GOARCH)
