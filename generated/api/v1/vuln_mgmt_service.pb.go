@@ -146,10 +146,11 @@ func (x *VulnMgmtExportWorkloadsResponse) GetLivePods() int32 {
 }
 
 type ImageVulnerabilitiesRequest struct {
-	state         protoimpl.MessageState `protogen:"open.v1"`
-	Query         string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
-	unknownFields protoimpl.UnknownFields
-	sizeCache     protoimpl.SizeCache
+	state             protoimpl.MessageState `protogen:"open.v1"`
+	Query             string                 `protobuf:"bytes,1,opt,name=query,proto3" json:"query,omitempty"`
+	IncludeUndeployed bool                   `protobuf:"varint,2,opt,name=include_undeployed,json=includeUndeployed,proto3" json:"include_undeployed,omitempty"`
+	unknownFields     protoimpl.UnknownFields
+	sizeCache         protoimpl.SizeCache
 }
 
 func (x *ImageVulnerabilitiesRequest) Reset() {
@@ -187,6 +188,13 @@ func (x *ImageVulnerabilitiesRequest) GetQuery() string {
 		return x.Query
 	}
 	return ""
+}
+
+func (x *ImageVulnerabilitiesRequest) GetIncludeUndeployed() bool {
+	if x != nil {
+		return x.IncludeUndeployed
+	}
+	return false
 }
 
 type ImageVulnerabilitiesResponse struct {
@@ -531,9 +539,10 @@ const file_api_v1_vuln_mgmt_service_proto_rawDesc = "" +
 	"deployment\x18\x01 \x01(\v2\x13.storage.DeploymentR\n" +
 	"deployment\x12&\n" +
 	"\x06images\x18\x02 \x03(\v2\x0e.storage.ImageR\x06images\x12\x1b\n" +
-	"\tlive_pods\x18\x03 \x01(\x05R\blivePods\"3\n" +
+	"\tlive_pods\x18\x03 \x01(\x05R\blivePods\"b\n" +
 	"\x1bImageVulnerabilitiesRequest\x12\x14\n" +
-	"\x05query\x18\x01 \x01(\tR\x05query\"\xad\t\n" +
+	"\x05query\x18\x01 \x01(\tR\x05query\x12-\n" +
+	"\x12include_undeployed\x18\x02 \x01(\bR\x11includeUndeployed\"\xad\t\n" +
 	"\x1cImageVulnerabilitiesResponse\x12D\n" +
 	"\x06images\x18\x01 \x03(\v2,.v1.ImageVulnerabilitiesResponse.ImagesEntryR\x06images\x1a\xe3\a\n" +
 	"\x05Image\x12P\n" +

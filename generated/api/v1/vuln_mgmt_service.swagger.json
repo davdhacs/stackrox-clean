@@ -39,6 +39,12 @@
             "in": "query",
             "required": false,
             "type": "string"
+          },
+          {
+            "name": "includeUndeployed",
+            "in": "query",
+            "required": false,
+            "type": "boolean"
           }
         ],
         "tags": [

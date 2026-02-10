@@ -199,6 +199,9 @@ func (s *serviceImpl) ImageVulnerabilities(ctx context.Context, req *v1.ImageVul
 		if err != nil {
 			return errors.Wrapf(err, "failed to get workload IDs for image %s", img.GetId())
 		}
+		if !req.GetIncludeUndeployed() && len(workloadIDs) == 0 {
+			return nil
+		}
 
 		images[img.GetId()] = &v1.ImageVulnerabilitiesResponse_Image{
 			Components:  components,

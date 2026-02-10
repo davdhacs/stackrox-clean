@@ -33,6 +33,7 @@ message VulnMgmtExportWorkloadsResponse {
 
 message ImageVulnerabilitiesRequest {
   string query = 1;
+  bool include_undeployed = 2;
 }
 
 message ImageVulnerabilitiesResponse {
