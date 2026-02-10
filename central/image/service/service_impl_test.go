@@ -596,7 +596,7 @@ func TestGetLayers(t *testing.T) {
 				assert.Nil(t, result)
 			} else {
 				require.NoError(t, err)
-				assert.Equal(t, tc.expectedLayers, result)
+				protoassert.MapEqual(t, tc.expectedLayers, result)
 			}
 		})
 	}

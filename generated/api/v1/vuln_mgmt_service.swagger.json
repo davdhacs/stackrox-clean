@@ -219,8 +219,10 @@
         "version": {
           "type": "string"
         },
-        "layerSha": {
-          "type": "string"
+        "layerIndex": {
+          "type": "integer",
+          "format": "int32",
+          "description": "The image layer index of the vulnerable component. -1 if unknown."
         },
         "location": {
           "type": "string"

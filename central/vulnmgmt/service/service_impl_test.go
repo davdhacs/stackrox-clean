@@ -7,6 +7,7 @@ import (
 	"github.com/stackrox/rox/generated/storage"
 	"github.com/stackrox/rox/pkg/protocompat"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func TestTransformVulnerabilityToResponse(t *testing.T) {
@@ -20,10 +21,10 @@ func TestTransformVulnerabilityToResponse(t *testing.T) {
 		result := transformVulnerabilityToResponse(vuln)
 
 		assert.NotNil(t, result)
-		assert.Equal(t, "CVE-2021-1234", result.Id)
-		assert.NotNil(t, result.FirstSystemOccurrence)
-		assert.NotNil(t, result.FirstImageOccurrence)
-		assert.Nil(t, result.Suppression)
+		assert.Equal(t, "CVE-2021-1234", result.GetId())
+		assert.NotNil(t, result.GetFirstSystemOccurrence())
+		assert.NotNil(t, result.GetFirstImageOccurrence())
+		assert.Nil(t, result.GetSuppression())
 	})
 
 	t.Run("with suppression", func(t *testing.T) {
@@ -37,10 +38,10 @@ func TestTransformVulnerabilityToResponse(t *testing.T) {
 		result := transformVulnerabilityToResponse(vuln)
 
 		assert.NotNil(t, result)
-		assert.Equal(t, "CVE-2021-1234", result.Id)
-		assert.NotNil(t, result.Suppression)
-		assert.NotNil(t, result.Suppression.SuppressActivation)
-		assert.NotNil(t, result.Suppression.SuppressExpiry)
+		assert.Equal(t, "CVE-2021-1234", result.GetId())
+		assert.NotNil(t, result.GetSuppression())
+		assert.NotNil(t, result.GetSuppression().GetSuppressActivation())
+		assert.NotNil(t, result.GetSuppression().GetSuppressExpiry())
 	})
 
 	t.Run("without CVE returns nil", func(t *testing.T) {
@@ -55,61 +56,11 @@ func TestTransformVulnerabilityToResponse(t *testing.T) {
 	})
 }
 
-func TestExtractLayerSha(t *testing.T) {
-	layerShas := []string{"sha256:layer1", "sha256:layer2", "sha256:layer3"}
-
-	t.Run("valid layer index", func(t *testing.T) {
-		comp := &storage.EmbeddedImageScanComponent{
-			HasLayerIndex: &storage.EmbeddedImageScanComponent_LayerIndex{
-				LayerIndex: 1,
-			},
-		}
-
-		result := extractLayerSha(comp, layerShas)
-
-		assert.Equal(t, "sha256:layer2", result)
-	})
-
-	t.Run("layer index out of bounds", func(t *testing.T) {
-		comp := &storage.EmbeddedImageScanComponent{
-			HasLayerIndex: &storage.EmbeddedImageScanComponent_LayerIndex{
-				LayerIndex: 10,
-			},
-		}
-
-		result := extractLayerSha(comp, layerShas)
-
-		assert.Equal(t, "", result)
-	})
-
-	t.Run("no layer index", func(t *testing.T) {
-		comp := &storage.EmbeddedImageScanComponent{}
-
-		result := extractLayerSha(comp, layerShas)
-
-		assert.Equal(t, "", result)
-	})
-
-	t.Run("empty layer shas", func(t *testing.T) {
-		comp := &storage.EmbeddedImageScanComponent{
-			HasLayerIndex: &storage.EmbeddedImageScanComponent_LayerIndex{
-				LayerIndex: 0,
-			},
-		}
-
-		result := extractLayerSha(comp, []string{})
-
-		assert.Equal(t, "", result)
-	})
-}
-
 func TestTransformComponentToResponse(t *testing.T) {
-	layerShas := []string{"sha256:layer1", "sha256:layer2"}
-
 	t.Run("with vulnerabilities", func(t *testing.T) {
 		comp := &storage.EmbeddedImageScanComponent{
-			Name:    "openssl",
-			Version: "1.0.0",
+			Name:     "openssl",
+			Version:  "1.0.0",
 			Location: "/usr/lib",
 			HasLayerIndex: &storage.EmbeddedImageScanComponent_LayerIndex{
 				LayerIndex: 0,
@@ -127,16 +78,16 @@ func TestTransformComponentToResponse(t *testing.T) {
 			},
 		}
 
-		result := transformComponentToResponse(comp, layerShas)
+		result := transformComponentToResponse(comp)
 
 		assert.NotNil(t, result)
-		assert.Equal(t, "openssl", result.Name)
-		assert.Equal(t, "1.0.0", result.Version)
-		assert.Equal(t, "/usr/lib", result.Location)
-		assert.Equal(t, "sha256:layer1", result.LayerSha)
-		assert.Len(t, result.Vulnerabilities, 2)
-		assert.Equal(t, "CVE-2021-1234", result.Vulnerabilities[0].Id)
-		assert.Equal(t, "CVE-2021-5678", result.Vulnerabilities[1].Id)
+		assert.Equal(t, "openssl", result.GetName())
+		assert.Equal(t, "1.0.0", result.GetVersion())
+		assert.Equal(t, "/usr/lib", result.GetLocation())
+		assert.Zero(t, result.GetLayerIndex())
+		require.Len(t, result.GetVulnerabilities(), 2)
+		assert.Equal(t, "CVE-2021-1234", result.GetVulnerabilities()[0].GetId())
+		assert.Equal(t, "CVE-2021-5678", result.GetVulnerabilities()[1].GetId())
 	})
 
 	t.Run("no vulnerabilities returns nil", func(t *testing.T) {
@@ -146,7 +97,7 @@ func TestTransformComponentToResponse(t *testing.T) {
 			Vulns:   []*storage.EmbeddedVulnerability{},
 		}
 
-		result := transformComponentToResponse(comp, layerShas)
+		result := transformComponentToResponse(comp)
 
 		assert.Nil(t, result)
 	})
@@ -163,7 +114,7 @@ func TestTransformComponentToResponse(t *testing.T) {
 			},
 		}
 
-		result := transformComponentToResponse(comp, layerShas)
+		result := transformComponentToResponse(comp)
 
 		assert.Nil(t, result)
 	})
@@ -185,11 +136,11 @@ func TestTransformComponentToResponse(t *testing.T) {
 			},
 		}
 
-		result := transformComponentToResponse(comp, layerShas)
+		result := transformComponentToResponse(comp)
 
 		assert.NotNil(t, result)
-		assert.Len(t, result.Vulnerabilities, 1)
-		assert.Equal(t, "CVE-2021-1234", result.Vulnerabilities[0].Id)
+		require.Len(t, result.GetVulnerabilities(), 1)
+		assert.Equal(t, "CVE-2021-1234", result.GetVulnerabilities()[0].GetId())
 	})
 }
 
@@ -210,16 +161,15 @@ func TestTransformImageToResponse_Integration(t *testing.T) {
 			},
 		}
 
-		layerShas := []string{"sha256:layer1"}
 		result := []*v1.ImageVulnerabilitiesResponse_Image_Component{}
 
 		for _, comp := range components {
-			if responseComp := transformComponentToResponse(comp, layerShas); responseComp != nil {
+			if responseComp := transformComponentToResponse(comp); responseComp != nil {
 				result = append(result, responseComp)
 			}
 		}
 
-		assert.Len(t, result, 1)
-		assert.Equal(t, "with-vulns", result[0].Name)
+		require.Len(t, result, 1)
+		assert.Equal(t, "with-vulns", result[0].GetName())
 	})
 }

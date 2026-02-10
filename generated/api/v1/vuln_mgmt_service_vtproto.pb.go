@@ -131,7 +131,7 @@ func (m *ImageVulnerabilitiesResponse_Image_Component) CloneVT() *ImageVulnerabi
 	r := new(ImageVulnerabilitiesResponse_Image_Component)
 	r.Name = m.Name
 	r.Version = m.Version
-	r.LayerSha = m.LayerSha
+	r.LayerIndex = m.LayerIndex
 	r.Location = m.Location
 	if rhs := m.Vulnerabilities; rhs != nil {
 		tmpContainer := make([]*ImageVulnerabilitiesResponse_Image_Component_Vulnerability, len(rhs))
@@ -353,7 +353,7 @@ func (this *ImageVulnerabilitiesResponse_Image_Component) EqualVT(that *ImageVul
 	if this.Version != that.Version {
 		return false
 	}
-	if this.LayerSha != that.LayerSha {
+	if this.LayerIndex != that.LayerIndex {
 		return false
 	}
 	if this.Location != that.Location {
@@ -802,12 +802,10 @@ func (m *ImageVulnerabilitiesResponse_Image_Component) MarshalToSizedBufferVT(dA
 		i--
 		dAtA[i] = 0x22
 	}
-	if len(m.LayerSha) > 0 {
-		i -= len(m.LayerSha)
-		copy(dAtA[i:], m.LayerSha)
-		i = protohelpers.EncodeVarint(dAtA, i, uint64(len(m.LayerSha)))
+	if m.LayerIndex != 0 {
+		i = protohelpers.EncodeVarint(dAtA, i, uint64(m.LayerIndex))
 		i--
-		dAtA[i] = 0x1a
+		dAtA[i] = 0x18
 	}
 	if len(m.Version) > 0 {
 		i -= len(m.Version)
@@ -1061,9 +1059,8 @@ func (m *ImageVulnerabilitiesResponse_Image_Component) SizeVT() (n int) {
 	if l > 0 {
 		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
 	}
-	l = len(m.LayerSha)
-	if l > 0 {
-		n += 1 + l + protohelpers.SizeOfVarint(uint64(l))
+	if m.LayerIndex != 0 {
+		n += 1 + protohelpers.SizeOfVarint(uint64(m.LayerIndex))
 	}
 	l = len(m.Location)
 	if l > 0 {
@@ -1908,10 +1905,10 @@ func (m *ImageVulnerabilitiesResponse_Image_Component) UnmarshalVT(dAtA []byte) 
 			m.Version = string(dAtA[iNdEx:postIndex])
 			iNdEx = postIndex
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LayerSha", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LayerIndex", wireType)
 			}
-			var stringLen uint64
+			m.LayerIndex = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -1921,24 +1918,11 @@ func (m *ImageVulnerabilitiesResponse_Image_Component) UnmarshalVT(dAtA []byte) 
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				m.LayerIndex |= int32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			m.LayerSha = string(dAtA[iNdEx:postIndex])
-			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Location", wireType)
@@ -3124,10 +3108,10 @@ func (m *ImageVulnerabilitiesResponse_Image_Component) UnmarshalVTUnsafe(dAtA []
 			m.Version = stringValue
 			iNdEx = postIndex
 		case 3:
-			if wireType != 2 {
-				return fmt.Errorf("proto: wrong wireType = %d for field LayerSha", wireType)
+			if wireType != 0 {
+				return fmt.Errorf("proto: wrong wireType = %d for field LayerIndex", wireType)
 			}
-			var stringLen uint64
+			m.LayerIndex = 0
 			for shift := uint(0); ; shift += 7 {
 				if shift >= 64 {
 					return protohelpers.ErrIntOverflow
@@ -3137,28 +3121,11 @@ func (m *ImageVulnerabilitiesResponse_Image_Component) UnmarshalVTUnsafe(dAtA []
 				}
 				b := dAtA[iNdEx]
 				iNdEx++
-				stringLen |= uint64(b&0x7F) << shift
+				m.LayerIndex |= int32(b&0x7F) << shift
 				if b < 0x80 {
 					break
 				}
 			}
-			intStringLen := int(stringLen)
-			if intStringLen < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			postIndex := iNdEx + intStringLen
-			if postIndex < 0 {
-				return protohelpers.ErrInvalidLength
-			}
-			if postIndex > l {
-				return io.ErrUnexpectedEOF
-			}
-			var stringValue string
-			if intStringLen > 0 {
-				stringValue = unsafe.String(&dAtA[iNdEx], intStringLen)
-			}
-			m.LayerSha = stringValue
-			iNdEx = postIndex
 		case 4:
 			if wireType != 2 {
 				return fmt.Errorf("proto: wrong wireType = %d for field Location", wireType)

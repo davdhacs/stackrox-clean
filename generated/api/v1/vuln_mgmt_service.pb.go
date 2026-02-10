@@ -244,10 +244,11 @@ func (x *ImageVulnerabilitiesResponse_Image) GetWorkloadIds() []string {
 }
 
 type ImageVulnerabilitiesResponse_Image_Component struct {
-	state           protoimpl.MessageState                                        `protogen:"open.v1"`
-	Name            string                                                        `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
-	Version         string                                                        `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
-	LayerSha        string                                                        `protobuf:"bytes,3,opt,name=layer_sha,json=layerSha,proto3" json:"layer_sha,omitempty"`
+	state   protoimpl.MessageState `protogen:"open.v1"`
+	Name    string                 `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	Version string                 `protobuf:"bytes,2,opt,name=version,proto3" json:"version,omitempty"`
+	// The image layer index of the vulnerable component. -1 if unknown.
+	LayerIndex      int32                                                         `protobuf:"varint,3,opt,name=layer_index,json=layerIndex,proto3" json:"layer_index,omitempty"`
 	Location        string                                                        `protobuf:"bytes,4,opt,name=location,proto3" json:"location,omitempty"`
 	Vulnerabilities []*ImageVulnerabilitiesResponse_Image_Component_Vulnerability `protobuf:"bytes,5,rep,name=vulnerabilities,proto3" json:"vulnerabilities,omitempty"`
 	unknownFields   protoimpl.UnknownFields
@@ -298,11 +299,11 @@ func (x *ImageVulnerabilitiesResponse_Image_Component) GetVersion() string {
 	return ""
 }
 
-func (x *ImageVulnerabilitiesResponse_Image_Component) GetLayerSha() string {
+func (x *ImageVulnerabilitiesResponse_Image_Component) GetLayerIndex() int32 {
 	if x != nil {
-		return x.LayerSha
+		return x.LayerIndex
 	}
-	return ""
+	return 0
 }
 
 func (x *ImageVulnerabilitiesResponse_Image_Component) GetLocation() string {
@@ -486,18 +487,19 @@ const file_api_v1_vuln_mgmt_service_proto_rawDesc = "" +
 	"deployment\x18\x01 \x01(\v2\x13.storage.DeploymentR\n" +
 	"deployment\x12&\n" +
 	"\x06images\x18\x02 \x03(\v2\x0e.storage.ImageR\x06images\x12\x1b\n" +
-	"\tlive_pods\x18\x03 \x01(\x05R\blivePods\"\xa9\t\n" +
+	"\tlive_pods\x18\x03 \x01(\x05R\blivePods\"\xad\t\n" +
 	"\x1cImageVulnerabilitiesResponse\x12D\n" +
-	"\x06images\x18\x01 \x03(\v2,.v1.ImageVulnerabilitiesResponse.ImagesEntryR\x06images\x1a\xdf\a\n" +
+	"\x06images\x18\x01 \x03(\v2,.v1.ImageVulnerabilitiesResponse.ImagesEntryR\x06images\x1a\xe3\a\n" +
 	"\x05Image\x12P\n" +
 	"\n" +
 	"components\x18\x01 \x03(\v20.v1.ImageVulnerabilitiesResponse.Image.ComponentR\n" +
 	"components\x12!\n" +
-	"\fworkload_ids\x18\x02 \x03(\tR\vworkloadIds\x1a\xe0\x06\n" +
+	"\fworkload_ids\x18\x02 \x03(\tR\vworkloadIds\x1a\xe4\x06\n" +
 	"\tComponent\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversion\x12\x1b\n" +
-	"\tlayer_sha\x18\x03 \x01(\tR\blayerSha\x12\x1a\n" +
+	"\aversion\x18\x02 \x01(\tR\aversion\x12\x1f\n" +
+	"\vlayer_index\x18\x03 \x01(\x05R\n" +
+	"layerIndex\x12\x1a\n" +
 	"\blocation\x18\x04 \x01(\tR\blocation\x12h\n" +
 	"\x0fvulnerabilities\x18\x05 \x03(\v2>.v1.ImageVulnerabilitiesResponse.Image.Component.VulnerabilityR\x0fvulnerabilities\x1a\x81\x05\n" +
 	"\rVulnerability\x12\x0e\n" +

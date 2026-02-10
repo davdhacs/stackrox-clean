@@ -223,11 +223,10 @@ func (s *serviceImpl) transformImageToResponse(ctx context.Context, img *storage
 		return nil, nil
 	}
 
-	layerShas := metadata.GetLayerShas()
 	responseComponents := make([]*v1.ImageVulnerabilitiesResponse_Image_Component, 0, len(components))
 
 	for _, comp := range components {
-		if responseComp := transformComponentToResponse(comp, layerShas); responseComp != nil {
+		if responseComp := transformComponentToResponse(comp); responseComp != nil {
 			responseComponents = append(responseComponents, responseComp)
 		}
 	}
@@ -250,7 +249,7 @@ func (s *serviceImpl) transformImageToResponse(ctx context.Context, img *storage
 // transformComponentToResponse converts a storage.EmbeddedImageScanComponent to
 // the response format.
 // Returns nil if the component has no vulnerabilities to report.
-func transformComponentToResponse(comp *storage.EmbeddedImageScanComponent, layerShas []string) *v1.ImageVulnerabilitiesResponse_Image_Component {
+func transformComponentToResponse(comp *storage.EmbeddedImageScanComponent) *v1.ImageVulnerabilitiesResponse_Image_Component {
 	vulns := comp.GetVulns()
 	if len(vulns) == 0 {
 		return nil
@@ -266,11 +265,14 @@ func transformComponentToResponse(comp *storage.EmbeddedImageScanComponent, laye
 	if len(responseVulns) == 0 {
 		return nil
 	}
-
+	layer := int32(-1)
+	if comp.GetHasLayerIndex() != nil {
+		layer = comp.GetLayerIndex()
+	}
 	return &v1.ImageVulnerabilitiesResponse_Image_Component{
 		Name:            comp.GetName(),
 		Version:         comp.GetVersion(),
-		LayerSha:        extractLayerSha(comp, layerShas),
+		LayerIndex:      layer,
 		Location:        comp.GetLocation(),
 		Vulnerabilities: responseVulns,
 	}
@@ -298,14 +300,6 @@ func transformVulnerabilityToResponse(vuln *storage.EmbeddedVulnerability) *v1.I
 	}
 
 	return vulnerability
-}
-
-// extractLayerSha extracts the layer SHA from a component's layer index.
-func extractLayerSha(comp *storage.EmbeddedImageScanComponent, layerShas []string) string {
-	if layerIndex := comp.GetLayerIndex(); comp.GetHasLayerIndex() != nil && int(layerIndex) < len(layerShas) {
-		return layerShas[layerIndex]
-	}
-	return ""
 }
 
 func (s *serviceImpl) getImageWorkloadIDs(ctx context.Context, imageID string) ([]string, error) {
