@@ -36,17 +36,21 @@ var (
 
 	// eventSourceRequirements defines the minimum required fields for a
 	// given event source.
-	eventSourceRequirements = map[storage.EventSource]set.StringSet{
-		storage.EventSource_AUDIT_LOG_EVENT: set.NewStringSet(
-			fieldnames.KubeResource,
-			fieldnames.KubeAPIVerb,
-		),
+	// Evaluated such that all_exist(set n) OR all_exist(set n+1) OR ... all_exist(set n+m)
+	eventSourceRequirements = map[storage.EventSource][]set.StringSet{
+		storage.EventSource_AUDIT_LOG_EVENT: []set.StringSet{
+			set.NewStringSet(
+				fieldnames.KubeResource,
+				fieldnames.KubeAPIVerb,
+			),
+		},
 		// FileAccess fields are currently the only ones supported for
 		// node events. In the future, when more node events are supported,
 		// this constraint can be relaxed.
-		storage.EventSource_NODE_EVENT: set.NewStringSet(
-			fieldnames.ActualPath,
-		),
+		storage.EventSource_NODE_EVENT: []set.StringSet{
+			set.NewStringSet(fieldnames.ActualPath),
+			set.NewStringSet(fieldnames.EffectivePath),
+		},
 	}
 )
 
@@ -209,16 +213,29 @@ func validateFieldDependencies(s *storage.PolicySection, seenFields *set.StringS
 func validateEventSourceRequirements(s *storage.PolicySection, seenFields *set.StringSet, eventSource storage.EventSource) error {
 	errorList := errorhelpers.NewErrorList(fmt.Sprintf("validating event source requirements for %s", s.GetSectionName()))
 
-	for es, requiredFields := range eventSourceRequirements {
-		if eventSource != es {
-			continue
-		}
+	requiredSets, ok := eventSourceRequirements[eventSource]
+	if !ok {
+		return errorList.ToError()
+	}
 
-		for required := range requiredFields {
+	foundMatch := false
+outer:
+	for _, requiredSet := range requiredSets {
+		for required := range requiredSet {
 			if !seenFields.Contains(required) {
-				errorList.AddStringf("%q policies require field %q", eventSource, required)
+				continue outer
 			}
 		}
+
+		foundMatch = true
+	}
+
+	if !foundMatch {
+		var sets []string
+		for _, requiredSet := range requiredSets {
+			sets = append(sets, fmt.Sprintf("(%s)", requiredSet.ElementsString(" AND ")))
+		}
+		errorList.AddStringf("Required fields: %s", strings.Join(sets, " OR "))
 	}
 
 	return errorList.ToError()

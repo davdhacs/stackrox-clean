@@ -948,7 +948,7 @@ func initializeFieldMetadata() FieldMetadata {
 				// paths are supported
 				return allowedFilePathRegex
 			},
-			[]storage.EventSource{storage.EventSource_DEPLOYMENT_EVENT},
+			[]storage.EventSource{storage.EventSource_NODE_EVENT, storage.EventSource_DEPLOYMENT_EVENT},
 			[]RuntimeFieldType{FileAccess}, negationForbidden,
 		)
 

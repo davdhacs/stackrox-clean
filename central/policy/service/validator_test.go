@@ -1014,12 +1014,11 @@ func (s *PolicyValidatorTestSuite) TestValidateEffectivePathEventSource() {
 				}),
 		},
 		{
-			description: "Node policy with Effective Path (should be invalid)",
+			description: "Node policy with Effective Path (should be valid)",
 			p: booleanPolicyWithFields(storage.LifecycleStage_RUNTIME, storage.EventSource_NODE_EVENT,
 				map[string]string{
 					fieldnames.EffectivePath: "/etc/passwd",
 				}),
-			errExpected: true,
 		},
 		{
 			description: "Deployment policy with FileOperation but no file path",

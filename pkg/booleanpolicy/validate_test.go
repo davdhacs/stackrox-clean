@@ -722,13 +722,13 @@ func (s *PolicyValueValidator) TestValidateFileOperationRequiresFilePath() {
 		},
 	}))
 
-	s.Error(Validate(&storage.Policy{
-		Name:          "Effective Path with NODE_EVENT should error",
+	s.NoError(Validate(&storage.Policy{
+		Name:          "Effective Path with NODE_EVENT shouldn't error",
 		PolicyVersion: policyversion.CurrentVersion().String(),
 		EventSource:   storage.EventSource_NODE_EVENT,
 		PolicySections: []*storage.PolicySection{
 			{
-				SectionName: "bad",
+				SectionName: "good",
 				PolicyGroups: []*storage.PolicyGroup{
 					{
 						FieldName: fieldnames.EffectivePath,
