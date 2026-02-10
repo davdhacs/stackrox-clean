@@ -2,16 +2,20 @@ name: Cache Go Dependencies
 description: Cache Go Dependencies
 inputs:
   save:
-    description: 'Whether this job is eligible to save caches. Actual saving only happens on pushes to save_on_ref.'
+    description: >
+      Controls cache saving on pushes to the default branch.
+      'auto' (default): saves when github.job matches cache_group.
+      'true': always saves (subject to default branch check).
+      'false': restore-only, never saves (use for non-default matrix variants
+      that share a cache group but should not overwrite it).
     required: false
-    type: boolean
-    default: false
-  save_on_ref:
-    description: 'Git ref that triggers cache saving on push events (default master).'
-    required: false
-    default: refs/heads/master
+    default: 'auto'
   cache_group:
-    description: 'GOCACHE group name. Defaults to pre-build-go-binaries (shared). Set to job name for per-job isolation.'
+    description: >
+      Jobs with the same cache_group share a GOCACHE entry. Defaults to
+      pre-build-go-binaries, which builds the most Go packages and produces
+      the most reusable cache. Set to ${{ github.job }} for jobs that need
+      their own isolated cache (e.g. scanner, operator).
     required: false
     default: 'pre-build-go-binaries'
 runs:
@@ -23,9 +27,23 @@ runs:
         echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_OUTPUT"
         echo "GOMODCACHE=$(go env GOMODCACHE)" >> "$GITHUB_OUTPUT"
         echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_OUTPUT"
-        # TODO(davdhacs): restore save_on_ref guard after validating warm cache on PR
-        #if [[ "${{ inputs.save }}" == "true" && "${{ github.event_name }}" == "push" && "${{ github.ref }}" == "${{ inputs.save_on_ref }}" ]]; then
-        if [[ "${{ inputs.save }}" == "true" ]]; then
+
+        build_key_prefix='go-build-v2-${{ inputs.cache_group }}-${{ steps.vars.outputs.GOARCH }}-'
+        echo "build_key_prefix=${build_key_prefix}" >> "$GITHUB_OUTPUT"
+        echo "build_key=${build_key_prefix}${{ hashFiles('**/go.sum') }}" >> "$GITHUB_OUTPUT"
+
+        deps_key_prefix='go-mod-v2-'
+        echo "deps_key_prefix=${deps_key_prefix}" >> "$GITHUB_OUTPUT"
+        echo "deps_key=${deps_key_prefix}${{ hashFiles('**/go.sum') }}" >> "$GITHUB_OUTPUT"
+
+        save="${{ inputs.save }}"
+        if [[ "$save" == "auto" ]]; then
+          # Auto-detect: save when this job owns the cache group
+          [[ "${{ github.job }}" == "${{ inputs.cache_group }}" ]] && save=true || save=false
+        fi
+        if [[ "$save" == "true" \
+              && "${{ github.event_name }}" == "push" \
+              && "${{ github.ref_name }}" == "${{ github.event.repository.default_branch }}" ]]; then
           echo "save=1" >> "$GITHUB_OUTPUT"
         fi
       shell: bash
@@ -34,39 +52,33 @@ runs:
       if: steps.vars.outputs.save
       uses: actions/cache@v5
       with:
-        path: |
-          ${{ steps.vars.outputs.GOMODCACHE }}
-        key: go-mod-v2-${{ hashFiles('**/go.sum') }}
-        restore-keys: go-mod-v2-
+        path: ${{ steps.vars.outputs.GOMODCACHE }}
+        key: ${{ steps.vars.outputs.deps_key }}
+        restore-keys: ${{ steps.vars.outputs.deps_key_prefix }}
 
     - name: Restore Go Dependencies
       if: ! steps.vars.outputs.save
       uses: actions/cache/restore@v5
       with:
-        path: |
-          ${{ steps.vars.outputs.GOMODCACHE }}
-        key: go-mod-v2-${{ hashFiles('**/go.sum') }}
-        restore-keys: go-mod-v2-
+        path: ${{ steps.vars.outputs.GOMODCACHE }}
+        key: ${{ steps.vars.outputs.deps_key }}
+        restore-keys: ${{ steps.vars.outputs.deps_key_prefix }}
 
     - name: Cache Go Build
       if: steps.vars.outputs.save
       uses: actions/cache@v5
       with:
-        path: |
-          ${{ steps.vars.outputs.GOCACHE }}
-        key: go-build-v2-${{ inputs.cache_group }}-${{ steps.vars.outputs.GOARCH }}-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          go-build-v2-${{ inputs.cache_group }}-${{ steps.vars.outputs.GOARCH }}-
+        path: ${{ steps.vars.outputs.GOCACHE }}
+        key: ${{ steps.vars.outputs.build_key }}
+        restore-keys: ${{ steps.vars.outputs.build_key_prefix }}
 
     - name: Restore Go Build
       if: ! steps.vars.outputs.save
       uses: actions/cache/restore@v5
       with:
-        path: |
-          ${{ steps.vars.outputs.GOCACHE }}
-        key: go-build-v2-${{ inputs.cache_group }}-${{ steps.vars.outputs.GOARCH }}-${{ hashFiles('**/go.sum') }}
-        restore-keys: |
-          go-build-v2-${{ inputs.cache_group }}-${{ steps.vars.outputs.GOARCH }}-
+        path: ${{ steps.vars.outputs.GOCACHE }}
+        key: ${{ steps.vars.outputs.build_key }}
+        restore-keys: ${{ steps.vars.outputs.build_key_prefix }}
 
     - name: Download Go modules
       run: make deps --always-make
