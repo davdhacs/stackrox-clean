@@ -103,6 +103,8 @@ jobs:
 
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
+      with:
+        cache_group: ${{ github.job }}
 
     - uses: ./.github/actions/handle-tagged-build
 
