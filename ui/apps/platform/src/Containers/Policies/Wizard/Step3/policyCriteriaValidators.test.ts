@@ -129,55 +129,62 @@ describe('policyCriteriaValidators', () => {
             });
         });
 
-        policyEventSources.forEach((eventSource) => {
-            if (eventSource !== 'DEPLOYMENT_EVENT' && eventSource !== 'NODE_EVENT') {
-                return;
+        describe.each(policyEventSources)(
+            'should pass when File Operation and a path criterion are both present with values for %s event source',
+            (eventSource) => {
+                if (eventSource !== 'DEPLOYMENT_EVENT' && eventSource !== 'NODE_EVENT') {
+                    it.skip(`should not apply to ${eventSource} event source`);
+                }
+
+                const context: PolicyContext = {
+                    eventSource,
+                    lifecycleStages: ['RUNTIME'],
+                };
+
+                it('should pass when File Operation and Effective Path both present with values', () => {
+                    const section: ClientPolicySection = {
+                        sectionName: 'Test Section',
+                        policyGroups: [
+                            mockCriterionWithName('File Operation', [{ value: 'CREATE' }]),
+                            mockCriterionWithName('Effective Path', [{ value: '/etc/passwd' }]),
+                        ],
+                    };
+                    expect(validator.validate(section, context)).toBeUndefined();
+                });
+
+                it('should pass when File Operation and Actual Path both present with values', () => {
+                    const section: ClientPolicySection = {
+                        sectionName: 'Test Section',
+                        policyGroups: [
+                            mockCriterionWithName('File Operation', [{ value: 'CREATE' }]),
+                            mockCriterionWithName('Actual Path', [{ value: '/etc/passwd' }]),
+                        ],
+                    };
+                    expect(validator.validate(section, context)).toBeUndefined();
+                });
+
+                it('should fail when File Operation is present but Effective Path is missing', () => {
+                    const section: ClientPolicySection = {
+                        sectionName: 'Test Section',
+                        policyGroups: [
+                            mockCriterionWithName('File Operation', [{ value: 'CREATE' }]),
+                        ],
+                    };
+                    const error = validator.validate(section, context);
+                    expect(error).toBeDefined();
+                });
+
+                it('should fail when File Operation is present but Actual Path is missing', () => {
+                    const section: ClientPolicySection = {
+                        sectionName: 'Test Section',
+                        policyGroups: [
+                            mockCriterionWithName('File Operation', [{ value: 'CREATE' }]),
+                        ],
+                    };
+                    const error = validator.validate(section, context);
+                    expect(error).toBeDefined();
+                });
             }
-
-            const context: PolicyContext = {
-                eventSource,
-                lifecycleStages: ['RUNTIME'],
-            };
-
-            it('should pass when File Operation and Effective Path both present with values', () => {
-                const section: ClientPolicySection = {
-                    sectionName: 'Test Section',
-                    policyGroups: [
-                        mockCriterionWithName('File Operation', [{ value: 'CREATE' }]),
-                        mockCriterionWithName('Effective Path', [{ value: '/etc/passwd' }]),
-                    ],
-                };
-                expect(validator.validate(section, context)).toBeUndefined();
-            });
-
-            it('should pass when File Operation and Actual Path both present with values', () => {
-                const section: ClientPolicySection = {
-                    sectionName: 'Test Section',
-                    policyGroups: [
-                        mockCriterionWithName('File Operation', [{ value: 'CREATE' }]),
-                        mockCriterionWithName('Actual Path', [{ value: '/etc/passwd' }]),
-                    ],
-                };
-                expect(validator.validate(section, context)).toBeUndefined();
-            });
-
-            it('should fail when File Operation is present but Effective Path is missing', () => {
-                const section: ClientPolicySection = {
-                    sectionName: 'Test Section',
-                    policyGroups: [mockCriterionWithName('File Operation', [{ value: 'CREATE' }])],
-                };
-                const error = validator.validate(section, context);
-                expect(error).toBeDefined();
-            });
-
-            it('should fail when File Operation is present but Actual Path is missing', () => {
-                const section: ClientPolicySection = {
-                    sectionName: 'Test Section',
-                    policyGroups: [mockCriterionWithName('File Operation', [{ value: 'CREATE' }])],
-                };
-                const error = validator.validate(section, context);
-                expect(error).toBeDefined();
-            });
-        });
+        );
     });
 });
