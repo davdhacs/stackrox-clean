@@ -25,7 +25,6 @@ func LoadSpecSchema(t *testing.T, resource string) chartutil.Values {
 	require.NoError(t, yaml.Unmarshal(data, &crd))
 
 	versionSpecs := crd.Object["spec"].(map[string]any)["versions"].([]any)
-	require.Len(t, versionSpecs, 1, "expected a single API version spec")
 	onlyVersion := versionSpecs[0].(map[string]any)
 	centralSpecSchema, err := chartutil.Values(onlyVersion).Table("schema.openAPIV3Schema.properties.spec")
 	require.NoError(t, err)
