@@ -1052,6 +1052,9 @@ spec:
         displayName: Observed Generation
         path: observedGeneration
       version: v1alpha1
+    - kind: Central
+      name: centrals.platform.stackrox.io
+      version: v1beta1
     - description: 'SecuredCluster is the configuration template for the secured cluster
         services. These include Sensor, which is
 
@@ -1816,6 +1819,9 @@ spec:
         displayName: Observed Generation
         path: observedGeneration
       version: v1alpha1
+    - kind: SecuredCluster
+      name: securedclusters.platform.stackrox.io
+      version: v1beta1
     - kind: SecurityPolicy
       name: securitypolicies.config.stackrox.io
       version: v1alpha1
