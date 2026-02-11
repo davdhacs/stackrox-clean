@@ -1,6 +1,6 @@
 //+kubebuilder:object:generate=true
 
-package v1alpha1
+package v1beta1
 
 import (
 	corev1 "k8s.io/api/core/v1"

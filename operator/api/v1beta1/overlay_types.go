@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-package v1alpha1
+package v1beta1
 
 // K8sObjectOverlay is an overlay that applies a set of patches to a resource.
 // It targets a resource by its API version, kind, and name, and applies
