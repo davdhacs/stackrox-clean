@@ -23,6 +23,7 @@ jobs:
       uses: actions/setup-go@v6
       with:
         go-version-file: go.mod
+        cache: ${{ github.ref_name == github.event.repository.default_branch }}
 
     - name: Retest
       env:
