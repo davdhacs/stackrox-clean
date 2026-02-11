@@ -673,6 +673,7 @@ type CentralComponentStatus struct {
 }
 
 //+kubebuilder:object:root=true
+// +kubebuilder:storageversion
 //+kubebuilder:subresource:status
 //+operator-sdk:csv:customresourcedefinitions:resources={{Deployment,v1,""},{Secret,v1,""},{Service,v1,""},{Route,v1,""}}
 //+kubebuilder:printcolumn:name="Version",type=string,JSONPath=`.status.productVersion`
