@@ -41,9 +41,26 @@ jobs:
         gcp-account: ${{ secrets.GCP_SERVICE_ACCOUNT_STACKROX_CI }}
 
     - name: Cache Go dependencies
+      id: go-cache
       uses: ./.github/actions/cache-go-dependencies
       with:
-        save: false  # ~2,000 MB, test-dominated, no critical path speedup
+        save: false  # build cache saved by pre-build-go-binaries only
+
+    - name: Snapshot GOCACHE before test delta
+      run: |
+        echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+        echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
+        find "$(go env GOCACHE)" -type f | sort > /tmp/pre-test-manifest.txt
+      shell: bash
+
+    - name: Restore test delta cache
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ env.GOCACHE }}
+        key: go-test-delta-v1-${{ env.GOARCH }}-${{ github.job }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          go-test-delta-v1-${{ env.GOARCH }}-${{ github.job }}-
+          go-test-delta-v1-${{ env.GOARCH }}-
 
     - name: Go Unit Tests
       run: ${{ matrix.gotags }} make go-unit-tests
@@ -89,6 +106,22 @@ jobs:
         gcp-account: ${{ secrets.GCP_SERVICE_ACCOUNT_STACKROX_CI }}
         directory: 'junit-reports'
 
+    - name: Save test delta cache
+      if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+      run: |
+        GOCACHE=$(go env GOCACHE)
+        # Delete build-cache files, leaving only test-specific entries
+        xargs rm -f < /tmp/pre-test-manifest.txt
+        echo "GOCACHE trimmed to test delta: $(find "$GOCACHE" -type f | wc -l | tr -d ' ') files"
+      shell: bash
+
+    - name: Upload test delta cache
+      if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ env.GOCACHE }}
+        key: go-test-delta-v1-${{ env.GOARCH }}-${{ github.job }}-${{ hashFiles('**/go.sum') }}
+
   go-postgres:
     strategy:
       fail-fast: false
@@ -125,7 +158,23 @@ jobs:
     - name: Cache Go dependencies
       uses: ./.github/actions/cache-go-dependencies
       with:
-        save: false  # ~913 MB, test-dominated, no critical path speedup
+        save: false  # build cache saved by pre-build-go-binaries only
+
+    - name: Snapshot GOCACHE before test delta
+      run: |
+        echo "GOCACHE=$(go env GOCACHE)" >> "$GITHUB_ENV"
+        echo "GOARCH=$(go env GOARCH)" >> "$GITHUB_ENV"
+        find "$(go env GOCACHE)" -type f | sort > /tmp/pre-test-manifest.txt
+      shell: bash
+
+    - name: Restore test delta cache
+      uses: actions/cache/restore@v5
+      with:
+        path: ${{ env.GOCACHE }}
+        key: go-test-delta-v1-${{ env.GOARCH }}-${{ github.job }}-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          go-test-delta-v1-${{ env.GOARCH }}-${{ github.job }}-
+          go-test-delta-v1-${{ env.GOARCH }}-
 
     - name: Is Postgres ready
       run: pg_isready -h 127.0.0.1
@@ -157,6 +206,21 @@ jobs:
         jira-token: ${{ secrets.JIRA_TOKEN }}
         gcp-account: ${{ secrets.GCP_SERVICE_ACCOUNT_STACKROX_CI }}
         directory: 'junit-reports'
+
+    - name: Save test delta cache
+      if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+      run: |
+        GOCACHE=$(go env GOCACHE)
+        xargs rm -f < /tmp/pre-test-manifest.txt
+        echo "GOCACHE trimmed to test delta: $(find "$GOCACHE" -type f | wc -l | tr -d ' ') files"
+      shell: bash
+
+    - name: Upload test delta cache
+      if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
+      uses: actions/cache/save@v5
+      with:
+        path: ${{ env.GOCACHE }}
+        key: go-test-delta-v1-${{ env.GOARCH }}-${{ github.job }}-${{ hashFiles('**/go.sum') }}
 
   go-bench:
     runs-on: ubuntu-latest
