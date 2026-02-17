@@ -193,7 +193,6 @@ include $(PROJECT_DIR)/../make/gotools.mk
 $(call go-tool, CONTROLLER_GEN, sigs.k8s.io/controller-tools/cmd/controller-gen, tools/controller-gen)
 $(call go-tool, ENVTEST, sigs.k8s.io/controller-runtime/tools/setup-envtest, tools/envtest)
 $(call go-tool, KUSTOMIZE, sigs.k8s.io/kustomize/kustomize/v5, tools/kustomize)
-$(call go-tool, OLM, github.com/operator-framework/operator-lifecycle-manager/cmd/olm, tools/operator-sdk)
 $(call go-tool, KUTTL, github.com/kudobuilder/kuttl/cmd/kubectl-kuttl, tools/kuttl)
 $(call go-tool, YQ, github.com/mikefarah/yq/v4, tools/yq)
 
@@ -205,7 +204,6 @@ $(OPERATOR_SDK): tools/operator-sdk/go.mod tools/operator-sdk/go.sum
 	$(SILENT)cd tools/operator-sdk && GOBIN="$(dir $@)" go install -tags=containers_image_openpgp github.com/operator-framework/operator-sdk/cmd/operator-sdk
 
 OPERATOR_SDK_VERSION = $(shell cd tools/operator-sdk; go list -m -f '{{ .Version }}' github.com/operator-framework/operator-sdk)
-OLM_VERSION = $(shell cd tools/operator-sdk; go list -m -f '{{ .Version }}' github.com/operator-framework/operator-lifecycle-manager)
 
 .PHONY: kustomize
 kustomize: $(KUSTOMIZE) ## Download kustomize locally if necessary.
@@ -358,14 +356,6 @@ docker-build: build/Dockerfile.gen smuggled-status-sh ## Build docker image with
 ifndef ignore-not-found
   ignore-not-found = false
 endif
-
-.PHONY: olm-install
-olm-install: operator-sdk ## Install OLM on Kubernetes cluster
-	$(OPERATOR_SDK) olm install --version=$(OLM_VERSION)
-
-.PHONY: olm-uninstall
-olm-uninstall: operator-sdk ## Uninstall OLM previously installed on Kubernetes cluster
-	$(OPERATOR_SDK) olm uninstall
 
 .PHONY: install
 install: check-ci-setup manifests kustomize ## Install CRDs into the K8s cluster specified in ~/.kube/config.
