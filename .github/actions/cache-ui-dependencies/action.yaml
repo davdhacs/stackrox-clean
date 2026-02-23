@@ -8,7 +8,7 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Cache UI Dependencies
+    - name: Cache UI Dependencies (save)
       if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
       uses: actions/cache@v5
       with:
@@ -17,8 +17,9 @@ runs:
           /github/home/.cache/Cypress
           /usr/local/share/.cache
         key: npm-v2-${{ hashFiles(inputs.lockFile) }}
+        restore-keys: npm-v2-
 
-    - name: Restore UI Dependencies
+    - name: Cache UI Dependencies (restore)
       if: ${{ !(github.event_name == 'push' && github.ref_name == github.event.repository.default_branch) }}
       uses: actions/cache/restore@v5
       with:

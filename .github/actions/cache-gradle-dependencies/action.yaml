@@ -3,7 +3,8 @@ description: Cache QA Tests Dependencies
 runs:
   using: composite
   steps:
-    - name: Cache Gradle Dependencies
+    - name: Cache Gradle Dependencies (save)
+      if: github.event_name == 'push' && github.ref_name == github.event.repository.default_branch
       uses: actions/cache@v5
       with:
         path: |
@@ -11,6 +12,15 @@ runs:
           ~/.gradle/wrapper
           ~/.m2/repository
         key: gradle-v2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-        restore-keys: |
-          gradle-v2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
-          gradle-v2-
+        restore-keys: gradle-v2-
+
+    - name: Cache Gradle Dependencies (restore)
+      if: ${{ !(github.event_name == 'push' && github.ref_name == github.event.repository.default_branch) }}
+      uses: actions/cache/restore@v5
+      with:
+        path: |
+          ~/.gradle/caches
+          ~/.gradle/wrapper
+          ~/.m2/repository
+        key: gradle-v2-${{ hashFiles('**/*.gradle*', '**/gradle-wrapper.properties') }}
+        restore-keys: gradle-v2-
