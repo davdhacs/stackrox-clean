@@ -17,6 +17,9 @@ nohup.out
 # Vim swap files
 *.swp
 
+# Generated version data (written by Makefile)
+internal/version/zversion.go
+
 # Go mod
 vendor
 
