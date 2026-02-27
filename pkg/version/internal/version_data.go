@@ -1,14 +1,23 @@
 package internal
 
-var (
-	// MainVersion is the Rox version.
-	MainVersion string //XDef:STABLE_MAIN_VERSION
-	// CollectorVersion is the collector version to be used by default.
-	CollectorVersion string //XDef:STABLE_COLLECTOR_VERSION
-	// FactVersion is the fact version to be used by default.
-	FactVersion string //XDef:STABLE_FACT_VERSION
-	// ScannerVersion is the scanner version to be used with this Rox version.
-	ScannerVersion string //XDef:STABLE_SCANNER_VERSION
-	// GitShortSha is the (short) Git SHA that was built.
-	GitShortSha string //XDef:STABLE_GIT_SHORT_SHA
-)
+import _ "embed"
+
+// Version data is embedded from committed files at the repo root.
+// go-tool.sh copies them (stripped of whitespace) into this directory
+// before building. ActionIDs only change when file content changes
+// (version bumps), not on every commit.
+
+//go:embed VERSION
+var MainVersion string
+
+//go:embed COLLECTOR_VERSION
+var CollectorVersion string
+
+//go:embed SCANNER_VERSION
+var ScannerVersion string
+
+//go:embed FACT_VERSION
+var FactVersion string
+
+// GitShortSha is set by the stamp package for dev/CI builds.
+var GitShortSha string
