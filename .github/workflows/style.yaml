@@ -25,12 +25,18 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: quay.io/stackrox-io/apollo-ci:stackrox-test-0.5.3
+      options: >-
+        --tmpfs /__w/stackrox/stackrox:rw,exec,size=2g
+        -v /home/runner/work:/__w_host
     steps:
     - name: Checkout
       uses: actions/checkout@v6
       with:
         fetch-depth: 0
         ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Expose local actions to host
+      run: cp -a .github /__w_host/stackrox/stackrox/.github
 
     - uses: ./.github/actions/job-preamble
       with:
@@ -53,12 +59,18 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: quay.io/stackrox-io/apollo-ci:stackrox-test-0.5.3
+      options: >-
+        --tmpfs /__w/stackrox/stackrox:rw,exec,size=2g
+        -v /home/runner/work:/__w_host
     steps:
     - name: Checkout
       uses: actions/checkout@v6
       with:
         fetch-depth: 0
         ref: ${{ github.event.pull_request.head.sha }}
+
+    - name: Expose local actions to host
+      run: cp -a .github /__w_host/stackrox/stackrox/.github
 
     - uses: ./.github/actions/job-preamble
       with:
@@ -97,12 +109,18 @@ jobs:
       volumes:
         - /usr:/mnt/usr
         - /opt:/mnt/opt
+      options: >-
+        --tmpfs /__w/stackrox/stackrox:rw,exec,size=2g
+        -v /home/runner/work:/__w_host
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Expose local actions to host
+        run: cp -a .github /__w_host/stackrox/stackrox/.github
 
       - uses: ./.github/actions/job-preamble
         with:
@@ -253,12 +271,18 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: quay.io/stackrox-io/apollo-ci:stackrox-test-0.5.3
+      options: >-
+        --tmpfs /__w/stackrox/stackrox:rw,exec,size=2g
+        -v /home/runner/work:/__w_host
     steps:
       - name: Checkout
         uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Expose local actions to host
+        run: cp -a .github /__w_host/stackrox/stackrox/.github
 
       - uses: ./.github/actions/job-preamble
         with:
