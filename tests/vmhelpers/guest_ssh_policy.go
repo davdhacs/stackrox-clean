@@ -18,7 +18,19 @@ type SSHReachabilityPolicy struct {
 	ProbeTimeoutThreshold       int
 }
 
-// FirstContactSSHPolicy is a lenient SSH reachability policy
+// DefaultSSHReachabilityPolicy is the package default used by
+// WaitForSSHReachable for poll cadence, per-probe timeout, and
+// consecutive-failure thresholds that classify stuck or broken SSH.
+var DefaultSSHReachabilityPolicy = SSHReachabilityPolicy{
+	PollInterval:                sshReachablePollInterval,
+	ProbeTimeout:                sshProbeAttemptTimeout,
+	AuthFailureThreshold:        sshAuthFailureThreshold,
+	BannerTimeoutThreshold:      sshBannerTimeoutThreshold,
+	NetworkUnreachableThreshold: sshNetworkUnreachableThreshold,
+	ProbeTimeoutThreshold:       sshProbeTimeoutThreshold,
+}
+
+// FirstContactSSHPolicy is a lenient variant of DefaultSSHReachabilityPolicy
 // for the initial "is SSH up yet?" probe after VM creation, where auth/banner/
 // network failures are expected while the guest boots. Thresholds are high so
 // the context timeout is the only real bound; callers should set a generous
@@ -61,7 +73,7 @@ type sshFailureCategory struct {
 
 var sshFailureCategories = []sshFailureCategory{
 	{
-		label:       "ssh auth not accepted",
+		label:       "ssh authentication failed",
 		matches:     func(stderr string, _ error) bool { return isSSHAuthenticationFailure(stderr) },
 		counter:     func(c *sshProbeCounters) *int { return &c.authFailures },
 		threshold:   func(p SSHReachabilityPolicy) int { return p.AuthFailureThreshold },
@@ -72,7 +84,7 @@ var sshFailureCategories = []sshFailureCategory{
 		},
 	},
 	{
-		label:       "ssh banner not received",
+		label:       "ssh banner timeout",
 		matches:     func(stderr string, _ error) bool { return isSSHBannerTimeoutFailure(stderr) },
 		counter:     func(c *sshProbeCounters) *int { return &c.bannerTimeoutFailures },
 		threshold:   func(p SSHReachabilityPolicy) int { return p.BannerTimeoutThreshold },
@@ -82,7 +94,7 @@ var sshFailureCategories = []sshFailureCategory{
 		},
 	},
 	{
-		label:       "ssh network not ready",
+		label:       "ssh network unavailable",
 		matches:     func(stderr string, _ error) bool { return isSSHNetworkUnreachableFailure(stderr) },
 		counter:     func(c *sshProbeCounters) *int { return &c.networkUnreachableFailures },
 		threshold:   func(p SSHReachabilityPolicy) int { return p.NetworkUnreachableThreshold },
@@ -92,7 +104,7 @@ var sshFailureCategories = []sshFailureCategory{
 		},
 	},
 	{
-		label:       "ssh probe deadline reached",
+		label:       "ssh probe timed out",
 		matches:     func(_ string, err error) bool { return isSSHProbeTimeoutFailure(err) },
 		counter:     func(c *sshProbeCounters) *int { return &c.probeTimeoutFailures },
 		threshold:   func(p SSHReachabilityPolicy) int { return p.ProbeTimeoutThreshold },

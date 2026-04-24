@@ -1,10 +1,12 @@
 package vmhelpers
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -16,6 +18,19 @@ const (
 	waitLogEveryAttempts = 5
 	waitDetailMaxLen     = 300
 )
+
+// estimateMaxPollAttempts estimates how many poll iterations fit before ctx's deadline given interval.
+func estimateMaxPollAttempts(ctx context.Context, interval time.Duration) (max int, known bool) {
+	deadline, ok := ctx.Deadline()
+	if !ok || interval <= 0 {
+		return 0, false
+	}
+	remaining := time.Until(deadline)
+	if remaining <= 0 {
+		return 1, true
+	}
+	return int(remaining/interval) + 1, true
+}
 
 // shouldLogWaitAttempt limits poll-loop log noise: first attempt plus every Nth.
 func shouldLogWaitAttempt(attempt int) bool {
@@ -32,9 +47,17 @@ func truncateWaitDetail(detail string) string {
 }
 
 // logWaitAttempt emits one structured poll line when shouldLogWaitAttempt allows it.
-func logWaitAttempt(t testing.TB, desc string, attempt int, detail string) {
+func logWaitAttempt(t testing.TB, desc string, attempt, max int, maxKnown bool, detail string) {
 	t.Helper()
 	if !shouldLogWaitAttempt(attempt) {
+		return
+	}
+	if maxKnown {
+		left := max - attempt
+		if left < 0 {
+			left = 0
+		}
+		t.Logf("%s: attempt %d/%d (retries left: %d): %s", desc, attempt, max, left, detail)
 		return
 	}
 	t.Logf("%s: attempt %d: %s", desc, attempt, detail)
@@ -47,9 +70,8 @@ func logWaitAttempt(t testing.TB, desc string, attempt int, detail string) {
 var ErrAuthenticationExpired = errors.New("authentication expired — kubeconfig token or API credentials may have expired; remaining operations will fail")
 
 // IsAuthenticationExpired reports whether err looks like an expired or revoked
-// credential. It checks for wrapped ErrAuthenticationExpired sentinels (so
-// callers that already tagged an error can re-check without false negatives),
-// gRPC Unauthenticated status codes, and Kubernetes API Unauthorized errors.
+// credential. It checks gRPC Unauthenticated status codes and Kubernetes API
+// errors classified as Unauthorized by k8s API machinery.
 func IsAuthenticationExpired(err error) bool {
 	if err == nil {
 		return false

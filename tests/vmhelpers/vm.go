@@ -1,13 +1,17 @@
 package vmhelpers
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"fmt"
+	"strconv"
 	"strings"
 	"testing"
+	"text/template"
 	"time"
 
+	vmscanning "github.com/stackrox/rox/tests/testdata/vm-scanning"
 	coreV1 "k8s.io/api/core/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -23,7 +27,7 @@ import (
 // Defaults for VM resource requests and polling/logging during KubeVirt VM/VMI wait helpers.
 const (
 	defaultVMMemoryRequest = "2Gi"
-	defaultVMCPUCores      = uint32(3)
+	defaultVMCPUCores      = int64(3)
 	vmPollInterval         = 2 * time.Second
 )
 
@@ -41,26 +45,6 @@ var (
 	}
 )
 
-// vmFromUnstructured converts an unstructured object returned by the dynamic client
-// into a typed VirtualMachine.
-func vmFromUnstructured(obj *unstructured.Unstructured) (*kubevirtv1.VirtualMachine, error) {
-	var vm kubevirtv1.VirtualMachine
-	if err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &vm); err != nil {
-		return nil, fmt.Errorf("decode VirtualMachine: %w", err)
-	}
-	return &vm, nil
-}
-
-// vmiFromUnstructured converts an unstructured object returned by the dynamic client
-// into a typed VirtualMachineInstance.
-func vmiFromUnstructured(obj *unstructured.Unstructured) (*kubevirtv1.VirtualMachineInstance, error) {
-	var vmi kubevirtv1.VirtualMachineInstance
-	if err := k8sruntime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, &vmi); err != nil {
-		return nil, fmt.Errorf("decode VirtualMachineInstance: %w", err)
-	}
-	return &vmi, nil
-}
-
 // VMRequest describes inputs for cloud-init rendering and VirtualMachine creation.
 type VMRequest struct {
 	Name         string
@@ -70,24 +54,36 @@ type VMRequest struct {
 	SSHPublicKey string
 }
 
-// renderCloudInit produces cloud-init user-data YAML for the given request.
-// Callers must validate that GuestUser and SSHPublicKey are non-empty.
-func renderCloudInit(req VMRequest) string {
-	return fmt.Sprintf(`#cloud-config
-users:
-  - name: %q
-    sudo: "ALL=(ALL) NOPASSWD:ALL"
-    ssh_authorized_keys:
-      - %q
-`, req.GuestUser, req.SSHPublicKey)
+// RenderCloudInit expands the embedded cloud-init template using req.
+func RenderCloudInit(req VMRequest) ([]byte, error) {
+	if req.GuestUser == "" {
+		return nil, errors.New("VMRequest GuestUser is required")
+	}
+	if req.SSHPublicKey == "" {
+		return nil, errors.New("VMRequest SSHPublicKey is required")
+	}
+	tmpl, err := template.New("cloud-init").Funcs(template.FuncMap{
+		"yamlQuote": strconv.Quote,
+	}).Parse(string(vmscanning.CloudInitUserDataTemplate))
+	if err != nil {
+		return nil, fmt.Errorf("parse cloud-init template: %w", err)
+	}
+	var buf bytes.Buffer
+	if err := tmpl.Execute(&buf, req); err != nil {
+		return nil, fmt.Errorf("execute cloud-init template: %w", err)
+	}
+	return buf.Bytes(), nil
 }
 
 // CreateVirtualMachine submits a KubeVirt VirtualMachine with a container disk and NoCloud user-data.
 func CreateVirtualMachine(ctx context.Context, client dynamic.Interface, req VMRequest) error {
-	if req.Name == "" || req.Namespace == "" || req.Image == "" || req.GuestUser == "" || req.SSHPublicKey == "" {
-		return errors.New("VMRequest Name, Namespace, Image, GuestUser, and SSHPublicKey are required")
+	if req.Name == "" || req.Namespace == "" || req.Image == "" {
+		return errors.New("VMRequest Name, Namespace, and Image are required")
 	}
-	userData := renderCloudInit(req)
+	userData, err := RenderCloudInit(req)
+	if err != nil {
+		return err
+	}
 	runStrategy := kubevirtv1.RunStrategyAlways
 	autoattachVSOCK := true
 	vm := &kubevirtv1.VirtualMachine{
@@ -104,14 +100,6 @@ func CreateVirtualMachine(ctx context.Context, client dynamic.Interface, req VMR
 			Template: &kubevirtv1.VirtualMachineInstanceTemplateSpec{
 				Spec: kubevirtv1.VirtualMachineInstanceSpec{
 					Domain: kubevirtv1.DomainSpec{
-						CPU: &kubevirtv1.CPU{
-							Cores: defaultVMCPUCores,
-						},
-						Resources: kubevirtv1.ResourceRequirements{
-							Requests: coreV1.ResourceList{
-								coreV1.ResourceMemory: resource.MustParse(defaultVMMemoryRequest),
-							},
-						},
 						Devices: kubevirtv1.Devices{
 							AutoattachVSOCK: &autoattachVSOCK,
 							Disks: []kubevirtv1.Disk{
@@ -141,7 +129,7 @@ func CreateVirtualMachine(ctx context.Context, client dynamic.Interface, req VMR
 							Name: "cloudinitdisk",
 							VolumeSource: kubevirtv1.VolumeSource{
 								CloudInitNoCloud: &kubevirtv1.CloudInitNoCloudSource{
-									UserData: userData,
+									UserData: string(userData),
 								},
 							},
 						},
@@ -150,9 +138,15 @@ func CreateVirtualMachine(ctx context.Context, client dynamic.Interface, req VMR
 			},
 		},
 	}
+	vm.Spec.Template.Spec.Domain.Resources.Requests = coreV1.ResourceList{
+		coreV1.ResourceMemory: resource.MustParse(defaultVMMemoryRequest),
+	}
 	u, err := k8sruntime.DefaultUnstructuredConverter.ToUnstructured(vm)
 	if err != nil {
 		return fmt.Errorf("convert VirtualMachine to unstructured: %w", err)
+	}
+	if err := unstructured.SetNestedField(u, defaultVMCPUCores, "spec", "template", "spec", "domain", "cpu", "cores"); err != nil {
+		return fmt.Errorf("set vm cpu cores in manifest: %w", err)
 	}
 	_, err = client.Resource(vmGVR).Namespace(req.Namespace).Create(ctx, &unstructured.Unstructured{Object: u}, metav1.CreateOptions{})
 	if err != nil {
@@ -163,20 +157,26 @@ func CreateVirtualMachine(ctx context.Context, client dynamic.Interface, req VMR
 
 // GetVMContainerDiskImage reads the container disk image from an existing VirtualMachine.
 func GetVMContainerDiskImage(ctx context.Context, client dynamic.Interface, namespace, name string) (string, error) {
-	obj, err := client.Resource(vmGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	vm, err := client.Resource(vmGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("get VirtualMachine %s/%s: %w", namespace, name, err)
 	}
-	vm, err := vmFromUnstructured(obj)
-	if err != nil {
-		return "", fmt.Errorf("decode VirtualMachine %s/%s: %w", namespace, name, err)
+	volumes, found, err := unstructured.NestedSlice(vm.Object, "spec", "template", "spec", "volumes")
+	if err != nil || !found {
+		return "", fmt.Errorf("VirtualMachine %s/%s has no spec.template.spec.volumes", namespace, name)
 	}
-	if vm.Spec.Template == nil {
-		return "", fmt.Errorf("VirtualMachine %s/%s has no spec.template", namespace, name)
-	}
-	for _, vol := range vm.Spec.Template.Spec.Volumes {
-		if vol.Name == "containerdisk" && vol.ContainerDisk != nil && vol.ContainerDisk.Image != "" {
-			return vol.ContainerDisk.Image, nil
+	for _, raw := range volumes {
+		vol, ok := raw.(map[string]any)
+		if !ok {
+			continue
+		}
+		n, _ := vol["name"].(string)
+		if n != "containerdisk" {
+			continue
+		}
+		image, _, _ := unstructured.NestedString(vol, "containerDisk", "image")
+		if image != "" {
+			return image, nil
 		}
 	}
 	return "", fmt.Errorf("VirtualMachine %s/%s has no containerdisk volume", namespace, name)
@@ -214,7 +214,7 @@ func WaitForVirtualMachineInstanceRunning(t testing.TB, ctx context.Context, cli
 	t.Helper()
 	return pollKubeVirtCondition(t, ctx, vmPollInterval, fmt.Sprintf("wait VMI %s/%s running", namespace, name),
 		func(ctx context.Context, attempt int) (bool, string, error) {
-			obj, err := client.Resource(vmiGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+			vmi, err := client.Resource(vmiGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 			if err != nil {
 				if apierrors.IsNotFound(err) {
 					detail, termErr := handleVMINotFound(ctx, client, namespace, name, attempt, "VMI failed before becoming Running")
@@ -222,18 +222,25 @@ func WaitForVirtualMachineInstanceRunning(t testing.TB, ctx context.Context, cli
 				}
 				return false, "", fmt.Errorf("attempt %d: get VMI: %w", attempt, err)
 			}
-			vmi, err := vmiFromUnstructured(obj)
+			phase, found, err := unstructured.NestedString(vmi.Object, "status", "phase")
 			if err != nil {
-				return false, "", fmt.Errorf("attempt %d: decode VMI: %w", attempt, err)
+				return false, "", fmt.Errorf("attempt %d: read VMI phase: %w", attempt, err)
+			}
+			if !found {
+				return false, vmiPhaseDetail(vmi), nil
 			}
 			detail := vmiPhaseDetail(vmi)
-			switch vmi.Status.Phase {
-			case kubevirtv1.Running:
+			switch phase {
+			case string(kubevirtv1.Running):
 				return true, detail, nil
-			case kubevirtv1.Failed, kubevirtv1.Succeeded:
+			case string(kubevirtv1.Failed), string(kubevirtv1.Succeeded):
 				return false, detail, fmt.Errorf("attempt %d: VMI reached terminal phase: %s", attempt, detail)
 			default:
-				vmDetail, terminal, _ := virtualMachineStatusDetail(ctx, client, namespace, name)
+				var vmDetail string
+				var terminal bool
+				if vm, vmErr := client.Resource(vmGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{}); vmErr == nil {
+					vmDetail, terminal = vmPrintableStatusFromUnstructured(vm)
+				}
 				if terminal {
 					return false, detail + " " + vmDetail, fmt.Errorf("attempt %d: unrecoverable VM error: %s", attempt, vmDetail)
 				}
@@ -259,11 +266,11 @@ var terminalPrintableStatuses = []string{
 	"ErrorUnschedulable",
 }
 
-// vmPrintableStatus inspects a VirtualMachine and returns logging detail
-// plus whether printableStatus matches a terminal pattern.
-func vmPrintableStatus(vm *kubevirtv1.VirtualMachine) (string, bool) {
-	ps := strings.TrimSpace(string(vm.Status.PrintableStatus))
-	if ps == "" {
+// vmPrintableStatusFromUnstructured inspects an already-loaded VirtualMachine
+// and returns logging detail plus whether printableStatus matches a terminal pattern.
+func vmPrintableStatusFromUnstructured(vm *unstructured.Unstructured) (string, bool) {
+	ps, found, _ := unstructured.NestedString(vm.Object, "status", "printableStatus")
+	if !found || strings.TrimSpace(ps) == "" {
 		return "", false
 	}
 	for _, terminal := range terminalPrintableStatuses {
@@ -276,39 +283,51 @@ func vmPrintableStatus(vm *kubevirtv1.VirtualMachine) (string, bool) {
 
 // GetVMINodeName returns the Kubernetes node name that hosts the given VirtualMachineInstance.
 func GetVMINodeName(ctx context.Context, client dynamic.Interface, namespace, name string) (string, error) {
-	obj, err := client.Resource(vmiGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	vmi, err := client.Resource(vmiGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		return "", fmt.Errorf("get VMI %s/%s: %w", namespace, name, err)
 	}
-	vmi, err := vmiFromUnstructured(obj)
+	nodeName, found, err := unstructured.NestedString(vmi.Object, "status", "nodeName")
 	if err != nil {
-		return "", fmt.Errorf("decode VMI %s/%s: %w", namespace, name, err)
+		return "", fmt.Errorf("read VMI %s/%s status.nodeName: %w", namespace, name, err)
 	}
-	if vmi.Status.NodeName == "" {
+	if !found || nodeName == "" {
 		return "", fmt.Errorf("VMI %s/%s has no status.nodeName (phase=%s)", namespace, name, vmiPhaseDetail(vmi))
 	}
-	return vmi.Status.NodeName, nil
+	return nodeName, nil
 }
 
 // vmiPhaseDetail summarizes VMI phase and Ready condition fields for poll attempt logs.
-func vmiPhaseDetail(vmi *kubevirtv1.VirtualMachineInstance) string {
+func vmiPhaseDetail(vmi *unstructured.Unstructured) string {
 	parts := make([]string, 0, 2)
-	if vmi.Status.Phase != "" {
-		parts = append(parts, fmt.Sprintf("phase=%q", vmi.Status.Phase))
+	phase, found, _ := unstructured.NestedString(vmi.Object, "status", "phase")
+	if found && strings.TrimSpace(phase) != "" {
+		parts = append(parts, fmt.Sprintf("phase=%q", phase))
 	}
-	for _, cond := range vmi.Status.Conditions {
-		if cond.Type != kubevirtv1.VirtualMachineInstanceReady {
-			continue
+	conds, found, _ := unstructured.NestedSlice(vmi.Object, "status", "conditions")
+	if found {
+		for _, raw := range conds {
+			cond, ok := raw.(map[string]any)
+			if !ok {
+				continue
+			}
+			typ, _ := cond["type"].(string)
+			if !strings.EqualFold(strings.TrimSpace(typ), "Ready") {
+				continue
+			}
+			status, _ := cond["status"].(string)
+			reason, _ := cond["reason"].(string)
+			message, _ := cond["message"].(string)
+			part := fmt.Sprintf("ready.status=%q", strings.TrimSpace(status))
+			if strings.TrimSpace(reason) != "" {
+				part += fmt.Sprintf(" ready.reason=%q", strings.TrimSpace(reason))
+			}
+			if strings.TrimSpace(message) != "" {
+				part += fmt.Sprintf(" ready.message=%q", strings.TrimSpace(message))
+			}
+			parts = append(parts, part)
+			break
 		}
-		part := fmt.Sprintf("ready.status=%q", cond.Status)
-		if reason := strings.TrimSpace(cond.Reason); reason != "" {
-			part += fmt.Sprintf(" ready.reason=%q", reason)
-		}
-		if message := strings.TrimSpace(cond.Message); message != "" {
-			part += fmt.Sprintf(" ready.message=%q", message)
-		}
-		parts = append(parts, part)
-		break
 	}
 	if len(parts) == 0 {
 		return "vmi status unavailable"
@@ -344,13 +363,14 @@ func pollKubeVirtCondition(t testing.TB, ctx context.Context, interval time.Dura
 	t.Helper()
 	attempts := 0
 	lastDetail := ""
+	maxAttempts, maxKnown := estimateMaxPollAttempts(ctx, interval)
 	err := wait.PollUntilContextCancel(ctx, interval, true, func(ctx context.Context) (bool, error) {
 		attempts++
 		done, detail, err := check(ctx, attempts)
 		if detail != "" {
 			lastDetail = detail
 		}
-		logWaitAttempt(t, desc, attempts, detail)
+		logWaitAttempt(t, desc, attempts, maxAttempts, maxKnown, detail)
 		return done, err
 	})
 	if err == nil {
@@ -379,34 +399,49 @@ func handleVMINotFound(ctx context.Context, client dynamic.Interface, namespace,
 
 // virtualMachineStatusDetail loads the VM and returns status text for wait-loop logging; terminalFailure stops polling.
 func virtualMachineStatusDetail(ctx context.Context, client dynamic.Interface, namespace, name string) (detail string, terminalFailure bool, err error) {
-	obj, err := client.Resource(vmGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
+	vm, err := client.Resource(vmGVR).Namespace(namespace).Get(ctx, name, metav1.GetOptions{})
 	if err != nil {
 		if apierrors.IsNotFound(err) {
 			return "virtual machine object not found", false, nil
 		}
 		return "", false, err
 	}
-	vm, err := vmFromUnstructured(obj)
-	if err != nil {
-		return "", false, err
-	}
 	if detail, terminal := vmFailureConditionDetail(vm); terminal {
 		return detail, true, nil
 	}
-	if detail, terminal := vmPrintableStatus(vm); detail != "" {
-		return detail, terminal, nil
+	printableStatus, found, nestedErr := unstructured.NestedString(vm.Object, "status", "printableStatus")
+	if nestedErr != nil {
+		return "", false, nestedErr
+	}
+	if found && strings.TrimSpace(printableStatus) != "" {
+		return fmt.Sprintf("vm printableStatus=%q", printableStatus), false, nil
 	}
 	return "vm status unavailable", false, nil
 }
 
 // vmFailureConditionDetail returns a printable detail if the VM status has a True Failure condition.
-func vmFailureConditionDetail(vm *kubevirtv1.VirtualMachine) (string, bool) {
-	for _, cond := range vm.Status.Conditions {
-		if cond.Type != kubevirtv1.VirtualMachineFailure || cond.Status != coreV1.ConditionTrue {
+func vmFailureConditionDetail(vm *unstructured.Unstructured) (string, bool) {
+	conds, found, err := unstructured.NestedSlice(vm.Object, "status", "conditions")
+	if err != nil || !found {
+		return "", false
+	}
+	for _, raw := range conds {
+		cond, ok := raw.(map[string]any)
+		if !ok {
 			continue
 		}
-		reason := strings.TrimSpace(cond.Reason)
-		msg := strings.TrimSpace(cond.Message)
+		typ, _ := cond["type"].(string)
+		if !strings.EqualFold(strings.TrimSpace(typ), "Failure") {
+			continue
+		}
+		status, _ := cond["status"].(string)
+		if !strings.EqualFold(strings.TrimSpace(status), "True") {
+			continue
+		}
+		reason, _ := cond["reason"].(string)
+		msg, _ := cond["message"].(string)
+		reason = strings.TrimSpace(reason)
+		msg = strings.TrimSpace(msg)
 		switch {
 		case reason != "" && msg != "":
 			return fmt.Sprintf("failure condition reason=%q message=%q", reason, msg), true

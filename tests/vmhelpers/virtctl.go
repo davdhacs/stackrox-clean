@@ -5,9 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 	"sync"
+	"testing"
 	"time"
 )
 
@@ -23,64 +25,61 @@ const defaultVirtctlHeartbeatInterval = 30 * time.Second
 
 const inlineLogMaxHeadTailLines = 100
 
-// Virtctl runs virtctl subcommands with per-call timeout, logging, and heartbeats.
+// Virtctl runs virtctl subcommands with optional per-call timeout.
 type Virtctl struct {
 	Path           string
 	IdentityFile   string
 	Username       string
 	CommandTimeout time.Duration
-	// KnownHostsFile points SSH at the suite-scoped known_hosts file.
+	// KnownHostsFile, when set, points SSH at a real known_hosts file so that
+	// host keys learned on the first connection suppress the "Permanently added"
+	// warning on subsequent ones. Leave empty to use /dev/null (every connection
+	// warns). Use CreateKnownHostsFile to create a per-test temp file.
 	KnownHostsFile string
-	// Logf must be set. A nil logger is a test setup error and will panic on use.
+	// Logf is optional. When provided, each remote command logs start/heartbeat/completion.
 	Logf func(format string, args ...any)
 	// HeartbeatInterval controls "still running" log cadence for long commands.
 	// Zero uses defaultVirtctlHeartbeatInterval.
 	HeartbeatInterval time.Duration
+	// LogSuccessfulStreams, when true and Logf is set, includes truncated stdout/stderr
+	// on successful remote commands (same formatting as failures). Default is false so
+	// CI logs only record byte sizes unless a run fails or this is enabled for debugging.
+	LogSuccessfulStreams bool
 }
 
-// startHeartbeat launches periodic progress logging for a running virtctl command
-// and returns a stop function that shuts the heartbeat down and waits for exit.
-func (v Virtctl) startHeartbeat(start time.Time, summary string, args []string) func() {
-	interval := v.HeartbeatInterval
-	if interval <= 0 {
-		interval = defaultVirtctlHeartbeatInterval
+func (v Virtctl) knownHostsFile() string {
+	if v.KnownHostsFile != "" {
+		return v.KnownHostsFile
 	}
-
-	stopHeartbeat := make(chan struct{})
-	var hbWG sync.WaitGroup
-	vmTarget, hasVMTarget := virtctlSSHVMTarget(args)
-	hbWG.Go(func() {
-		ticker := time.NewTicker(interval)
-		defer ticker.Stop()
-		for {
-			select {
-			case <-stopHeartbeat:
-				return
-			case <-ticker.C:
-				if hasVMTarget {
-					v.Logf("remote command still running (%s elapsed) on VM %s", time.Since(start).Round(time.Second), vmTarget)
-					continue
-				}
-				v.Logf("remote command still running (%s elapsed): %s", time.Since(start).Round(time.Second), summary)
-			}
-		}
-	})
-
-	return func() {
-		close(stopHeartbeat)
-		hbWG.Wait()
-	}
+	return "/dev/null"
 }
 
-// run starts a virtctl (or argv[0]) subprocess, captures stdout/stderr, and logs progress.
+// CreateKnownHostsFile creates an empty temp file suitable for KnownHostsFile
+// and registers its removal via t.Cleanup. The first SSH connection populates
+// it with the VM's host key; subsequent connections find the key and skip the
+// "Permanently added" warning.
+func CreateKnownHostsFile(t testing.TB) string {
+	t.Helper()
+	f, err := os.CreateTemp("", "virtctl-known-hosts-*")
+	if err != nil {
+		t.Logf("WARNING: failed to create known_hosts temp file, falling back to /dev/null: %v", err)
+		return "/dev/null"
+	}
+	name := f.Name()
+	_ = f.Close()
+	t.Cleanup(func() { _ = os.Remove(name) })
+	return name
+}
+
+// run starts a virtctl (or argv[0]) subprocess, captures stdout/stderr, and honors optional logging and heartbeats.
 func (v Virtctl) run(ctx context.Context, args []string) (stdout string, stderr string, err error) {
-	if len(args) == 0 {
-		return "", "", errors.New("virtctl: empty args")
-	}
 	if v.CommandTimeout > 0 {
 		var cancel context.CancelFunc
 		ctx, cancel = context.WithTimeout(ctx, v.CommandTimeout)
 		defer cancel()
+	}
+	if len(args) == 0 {
+		return "", "", errors.New("virtctl: empty args")
 	}
 	cmd := exec.Command(args[0], args[1:]...)
 	configureVirtctlCmdForCancellation(cmd)
@@ -89,27 +88,68 @@ func (v Virtctl) run(ctx context.Context, args []string) (stdout string, stderr 
 	cmd.Stderr = &errBuf
 	start := time.Now()
 	summary := summarizeVirtctlCommand(args)
-	v.Logf("remote command start: %s (deadline in %s)", summary, formatDeadlineRemaining(ctx))
-	stopHeartbeat := v.startHeartbeat(start, summary, args)
-	defer stopHeartbeat()
+	var (
+		stopHeartbeat chan struct{}
+		hbWG          sync.WaitGroup
+	)
+	if v.Logf != nil {
+		v.Logf("remote command start: %s (deadline in %s)", summary, formatDeadlineRemaining(ctx))
+		stopHeartbeat = make(chan struct{})
+		interval := v.HeartbeatInterval
+		if interval <= 0 {
+			interval = defaultVirtctlHeartbeatInterval
+		}
+		hbWG.Go(func() {
+			ticker := time.NewTicker(interval)
+			defer ticker.Stop()
+			for {
+				select {
+				case <-stopHeartbeat:
+					return
+				case <-ticker.C:
+					if vmTarget, ok := virtctlSSHVMTarget(args); ok {
+						v.Logf("remote command still running (%s elapsed) on VM %s", time.Since(start).Round(time.Second), vmTarget)
+					} else {
+						v.Logf("remote command still running (%s elapsed): %s", time.Since(start).Round(time.Second), summary)
+					}
+				}
+			}
+		})
+	}
 	if err = cmd.Start(); err != nil {
+		if stopHeartbeat != nil {
+			close(stopHeartbeat)
+			hbWG.Wait()
+		}
 		stdoutStr := outBuf.String()
 		stderrStr := errBuf.String()
-		v.Logf("remote command could not start: %s (result=%v)", summary, err)
+		if v.Logf != nil {
+			v.Logf("remote command failed to start: %s (err=%v)", summary, err)
+		}
 		return stdoutStr, stderrStr, err
 	}
 	err = waitForCommandWithContext(ctx, cmd)
 
+	if stopHeartbeat != nil {
+		close(stopHeartbeat)
+		hbWG.Wait()
+	}
 	stdoutStr := outBuf.String()
 	stderrStr := errBuf.String()
-	elapsed := time.Since(start).Round(time.Second)
-	if err != nil {
-		v.Logf("remote command not successful in %s: %s (result=%v stdout=%dB stderr=%dB)\n%s",
-			elapsed, summary, err, len(stdoutStr), len(stderrStr), formatRemoteCommandStreamsForInlineLog(stdoutStr, stderrStr))
-		return stdoutStr, stderrStr, err
+	if v.Logf != nil {
+		elapsed := time.Since(start).Round(time.Second)
+		if err != nil {
+			v.Logf("remote command failed in %s: %s (outcome=%v stdout=%dB stderr=%dB)\n%s",
+				elapsed, summary, err, len(stdoutStr), len(stderrStr), formatRemoteCommandStreamsForInlineLog(stdoutStr, stderrStr))
+		} else {
+			if v.LogSuccessfulStreams {
+				v.Logf("remote command complete in %s: %s (stdout=%dB stderr=%dB)\n%s",
+					elapsed, summary, len(stdoutStr), len(stderrStr), formatRemoteCommandStreamsForInlineLog(stdoutStr, stderrStr))
+			} else {
+				v.Logf("remote command complete in %s: %s (stdout=%dB stderr=%dB)", elapsed, summary, len(stdoutStr), len(stderrStr))
+			}
+		}
 	}
-	v.Logf("remote command complete in %s: %s (stdout=%dB stderr=%dB)\n%s",
-		elapsed, summary, len(stdoutStr), len(stderrStr), formatRemoteCommandStreamsForInlineLog(stdoutStr, stderrStr))
 	return stdoutStr, stderrStr, err
 }
 
@@ -164,7 +204,7 @@ func formatRemoteCommandStreamsForInlineLog(stdout, stderr string) string {
 	stdout = strings.TrimSpace(stdout)
 	if stderr != "" {
 		b.WriteString("stderr:\n")
-		b.WriteString(truncateMiddleLines(stderr, inlineLogMaxHeadTailLines))
+		b.WriteString(stderr)
 	}
 	if stdout != "" {
 		if b.Len() > 0 {
@@ -193,6 +233,29 @@ func truncateMiddleLines(s string, n int) string {
 		strings.Join(tail, "\n")
 }
 
+// SCPTo copies a local file to the guest using `virtctl scp`.
+func (v Virtctl) SCPTo(ctx context.Context, namespace, vm, src, dst string) (stderr string, err error) {
+	args := buildVirtctlSCPToArgs(v.Path, namespace, vm, v.IdentityFile, v.Username, v.knownHostsFile(), src, dst)
+	_, stderrStr, err := v.run(ctx, args)
+	return stderrStr, err
+}
+
+// buildVirtctlSCPToArgs builds the full argument list for `virtctl scp` uploading src to dst on the guest.
+func buildVirtctlSCPToArgs(virtctlPath, namespace, vm, identityFile, username, knownHostsFile, src, dst string) []string {
+	args := []string{
+		virtctlPath, "scp",
+		"--namespace", namespace,
+		"--identity-file", identityFile,
+		"--known-hosts", knownHostsFile,
+	}
+	args = appendLocalSSHOpts(args, knownHostsFile)
+	if username != "" {
+		args = append(args, "--username", username)
+	}
+	args = append(args, src, fmt.Sprintf("%s:%s", normalizeVirtctlTarget(vm), dst))
+	return args
+}
+
 // --- Shared helpers used across virtctl.go and virtctl_ssh.go ---
 
 // normalizeVirtctlTarget returns vm unchanged if it already includes a resource prefix; otherwise prefixes with "vmi/".
@@ -204,12 +267,12 @@ func normalizeVirtctlTarget(vm string) string {
 	return "vmi/" + vm
 }
 
-// appendLocalSSHOpts appends defaultLocalSSHOpts plus the suite-scoped UserKnownHostsFile to args as --local-ssh-opts pairs.
-func (v Virtctl) appendLocalSSHOpts(args []string) []string {
+// appendLocalSSHOpts appends defaultLocalSSHOpts plus a dynamic UserKnownHostsFile to args as --local-ssh-opts pairs.
+func appendLocalSSHOpts(args []string, knownHostsFile string) []string {
 	for _, opt := range defaultLocalSSHOpts {
 		args = append(args, "--local-ssh-opts", opt)
 	}
-	args = append(args, "--local-ssh-opts", "-o UserKnownHostsFile="+v.KnownHostsFile)
+	args = append(args, "--local-ssh-opts", "-o UserKnownHostsFile="+knownHostsFile)
 	return args
 }
 
@@ -272,16 +335,19 @@ func virtctlFlagConsumesValue(flag string) bool {
 
 // virtctlPositionalArgs returns non-flag arguments from a virtctl argv (skipping the binary and subcommand).
 func virtctlPositionalArgs(args []string) []string {
+	if len(args) <= 2 {
+		return nil
+	}
 	var positionals []string
 	for i := 2; i < len(args); i++ {
 		arg := args[i]
-		if !strings.HasPrefix(arg, "--") {
-			positionals = append(positionals, arg)
+		if strings.HasPrefix(arg, "--") {
+			if virtctlFlagConsumesValue(arg) && i+1 < len(args) {
+				i++
+			}
 			continue
 		}
-		if virtctlFlagConsumesValue(arg) {
-			i++
-		}
+		positionals = append(positionals, arg)
 	}
 	return positionals
 }
