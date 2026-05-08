@@ -18,6 +18,7 @@ import (
 	"github.com/stackrox/rox/pkg/env"
 	"github.com/stackrox/rox/pkg/errorhelpers"
 	"github.com/stackrox/rox/pkg/errox"
+	"github.com/stackrox/rox/pkg/features"
 	imgUtils "github.com/stackrox/rox/pkg/images/utils"
 	"github.com/stackrox/rox/pkg/logging"
 	"github.com/stackrox/rox/pkg/networkgraph"
@@ -30,6 +31,7 @@ import (
 	"github.com/stackrox/rox/sensor/common/admissioncontroller"
 	"github.com/stackrox/rox/sensor/common/centralcaps"
 	"github.com/stackrox/rox/sensor/common/detector/baseline"
+	detectorEvents "github.com/stackrox/rox/sensor/common/detector/events"
 	detectorMetrics "github.com/stackrox/rox/sensor/common/detector/metrics"
 	networkBaselineEval "github.com/stackrox/rox/sensor/common/detector/networkbaseline"
 	"github.com/stackrox/rox/sensor/common/detector/queue"
@@ -41,6 +43,7 @@ import (
 	"github.com/stackrox/rox/sensor/common/image/cache"
 	"github.com/stackrox/rox/sensor/common/message"
 	"github.com/stackrox/rox/sensor/common/metrics"
+	"github.com/stackrox/rox/sensor/common/pubsub"
 	"github.com/stackrox/rox/sensor/common/registry"
 	"github.com/stackrox/rox/sensor/common/scan"
 	"github.com/stackrox/rox/sensor/common/store"
@@ -78,7 +81,8 @@ type Detector interface {
 func New(clusterID clusterIDPeekWaiter, enforcer enforcer.Enforcer, admCtrlSettingsMgr admissioncontroller.SettingsManager,
 	deploymentStore store.DeploymentStore, serviceAccountStore store.ServiceAccountStore, cache cache.Image, auditLogEvents chan *sensor.AuditEvents,
 	auditLogUpdater updater.Component, networkPolicyStore store.NetworkPolicyStore, registryStore *registry.Store, localScan *scan.LocalScan, nodeStore store.NodeStore,
-	clusterLabelProvider scopecomp.ClusterLabelProvider, namespaceLabelProvider scopecomp.NamespaceLabelProvider, factSettingsMgr *filesystem.FactSettingsManager) Detector {
+	clusterLabelProvider scopecomp.ClusterLabelProvider, namespaceLabelProvider scopecomp.NamespaceLabelProvider, factSettingsMgr *filesystem.FactSettingsManager,
+	pubSubDispatcher common.PubSubDispatcher) Detector {
 	detectorStopper := concurrency.NewStopper()
 	netFlowQueueSize := queueScaler.ScaleSizeOnNonDefault(env.DetectorNetworkFlowBufferSize)
 	piQueueSize := queueScaler.ScaleSizeOnNonDefault(env.DetectorProcessIndicatorBufferSize)
@@ -94,7 +98,7 @@ func New(clusterID clusterIDPeekWaiter, enforcer enforcer.Enforcer, admCtrlSetti
 		detectorMetrics.DetectorNetworkFlowQueueOperations,
 		detectorMetrics.DetectorNetworkFlowDroppedCount,
 	)
-	piQueue := queue.NewQueue[*queue.IndicatorQueueItem](
+	piQueue := queue.NewQueue[*detectorEvents.IndicatorEvent](
 		detectorStopper,
 		"PIsQueue",
 		piQueueSize,
@@ -150,6 +154,9 @@ func New(clusterID clusterIDPeekWaiter, enforcer enforcer.Enforcer, admCtrlSetti
 		indicatorsQueue:   piQueue,
 		deploymentsQueue:  deploymentQueue,
 		fileAccessQueue:   fileAccessQueue,
+
+		pubSubDispatcher: pubSubDispatcher,
+		runtimeRunning:   concurrency.NewSignal(),
 	}
 }
 
@@ -191,25 +198,47 @@ type detectorImpl struct {
 	networkPolicyStore store.NetworkPolicyStore
 
 	networkFlowsQueue *queue.Queue[*queue.FlowQueueItem]
-	indicatorsQueue   *queue.Queue[*queue.IndicatorQueueItem]
+	indicatorsQueue   *queue.Queue[*detectorEvents.IndicatorEvent]
 	deploymentsQueue  queue.SimpleQueue[*queue.DeploymentQueueItem]
 	fileAccessQueue   *queue.Queue[*queue.FileAccessQueueItem]
+
+	pubSubDispatcher common.PubSubDispatcher
+	runtimeRunning   concurrency.Signal
 }
 
 func (d *detectorImpl) Name() string {
 	return "detector.detectorImpl"
 }
 
+func (d *detectorImpl) pubSubEnabled() bool {
+	return features.SensorInternalPubSub.Enabled() && d.pubSubDispatcher != nil
+}
+
 func (d *detectorImpl) Start() error {
+	if d.pubSubEnabled() {
+		if err := d.pubSubDispatcher.RegisterConsumerToLane(
+			pubsub.DetectorProcessIndicatorConsumer,
+			pubsub.DetectorProcessIndicatorTopic,
+			pubsub.DetectorProcessIndicatorLane,
+			d.handleIndicatorEvent,
+		); err != nil {
+			return errors.Wrap(err, "failed to register detector process indicator consumer")
+		}
+	}
+
 	go d.runDetector()
 	go d.runAuditLogEventDetector()
 	go d.serializeDeployTimeOutput()
 	go d.processAlertsForFlowOnEntity()
-	go d.processIndicator()
 	go d.processDeployment()
 	go d.processFileAccess()
+
+	if !d.pubSubEnabled() {
+		go d.processIndicator()
+		d.indicatorsQueue.Start()
+	}
+
 	d.networkFlowsQueue.Start()
-	d.indicatorsQueue.Start()
 	d.fileAccessQueue.Start()
 	return nil
 }
@@ -296,11 +325,19 @@ func (d *detectorImpl) Notify(e common.SensorComponentEvent) {
 	log.Info(common.LogSensorComponentEvent(e))
 	switch e {
 	case common.SensorComponentEventCentralReachable:
-		d.indicatorsQueue.Resume()
+		if d.pubSubEnabled() {
+			d.runtimeRunning.Signal()
+		} else {
+			d.indicatorsQueue.Resume()
+		}
 		d.networkFlowsQueue.Resume()
 		d.fileAccessQueue.Resume()
 	case common.SensorComponentEventOfflineMode:
-		d.indicatorsQueue.Pause()
+		if d.pubSubEnabled() {
+			d.runtimeRunning.Reset()
+		} else {
+			d.indicatorsQueue.Pause()
+		}
 		d.networkFlowsQueue.Pause()
 		d.fileAccessQueue.Pause()
 	}
@@ -595,7 +632,11 @@ func (d *detectorImpl) SetCentralGRPCClient(cc grpc.ClientConnInterface) {
 }
 
 func (d *detectorImpl) ProcessIndicator(ctx context.Context, pi *storage.ProcessIndicator) {
-	go d.pushIndicator(ctx, pi)
+	if d.pubSubEnabled() {
+		go d.publishIndicator(ctx, pi)
+	} else {
+		go d.pushIndicator(ctx, pi)
+	}
 }
 
 func createAlertResultsMsg(ctx context.Context, action central.ResourceAction, alertResults *central.AlertResults) *message.ExpiringMessage {
@@ -619,21 +660,60 @@ func createAlertResultsMsg(ctx context.Context, action central.ResourceAction, a
 	return message.NewExpiring(ctx, msgFromSensor)
 }
 
-func (d *detectorImpl) pushIndicator(ctx context.Context, pi *storage.ProcessIndicator) {
+// enrichIndicator snapshots the deployment, network policies, and baseline
+// status at the time the indicator arrives. This is done before queuing so
+// the consumer is independent of the store's current state — important
+// because stores are wiped and repopulated on reconnect.
+func (d *detectorImpl) enrichIndicator(ctx context.Context, pi *storage.ProcessIndicator) *detectorEvents.IndicatorEvent {
 	deployment := d.deploymentStore.GetSnapshot(pi.GetDeploymentId())
 	if deployment == nil {
 		log.Debugf("Deployment has already been removed: %+v", pi)
 		// Because the indicator was already enriched with a deployment, this means the deployment is gone
-		return
+		return nil
 	}
-	item := &queue.IndicatorQueueItem{
+	return &detectorEvents.IndicatorEvent{
 		Ctx:          ctx,
 		Deployment:   deployment,
 		Netpols:      d.getNetworkPoliciesApplied(deployment),
 		IsInBaseline: d.baselineEval.IsOutsideLockedBaseline(pi),
 		Indicator:    pi,
 	}
-	d.indicatorsQueue.Push(item)
+}
+
+func (d *detectorImpl) pushIndicator(ctx context.Context, pi *storage.ProcessIndicator) {
+	event := d.enrichIndicator(ctx, pi)
+	if event == nil {
+		return
+	}
+	d.indicatorsQueue.Push(event)
+}
+
+func (d *detectorImpl) detectAndAlertForIndicator(event *detectorEvents.IndicatorEvent) {
+	// The context persists across disconnects with event buffering enabled
+	images := d.enricher.getImages(event.Ctx, event.Deployment)
+
+	// Run detection now
+	alerts := d.unifiedDetector.DetectProcess(booleanpolicy.EnhancedDeployment{
+		Deployment:             event.Deployment,
+		Images:                 images,
+		NetworkPoliciesApplied: event.Netpols,
+	}, event.Indicator, event.IsInBaseline)
+	if len(alerts) == 0 {
+		// No need to process runtime alerts that have no violations
+		return
+	}
+	alertResults := &central.AlertResults{
+		DeploymentId: event.Indicator.GetDeploymentId(),
+		Alerts:       alerts,
+		Stage:        storage.LifecycleStage_RUNTIME,
+	}
+
+	d.enforcer.ProcessAlertResults(central.ResourceAction_CREATE_RESOURCE, storage.LifecycleStage_RUNTIME, alertResults)
+
+	select {
+	case <-d.alertStopSig.Done():
+	case d.output <- createAlertResultsMsg(event.Ctx, central.ResourceAction_CREATE_RESOURCE, alertResults):
+	}
 }
 
 func (d *detectorImpl) processIndicator() {
@@ -641,41 +721,43 @@ func (d *detectorImpl) processIndicator() {
 		select {
 		case <-d.detectorStopper.Flow().StopRequested():
 			return
-		case item, ok := <-d.indicatorsQueue.Pull():
+		case event, ok := <-d.indicatorsQueue.Pull():
 			if !ok {
 				return
 			}
-			if item == nil {
+			if event == nil {
 				continue
 			}
-			// The context persists across disconnects with event buffering enabled
-			images := d.enricher.getImages(item.Ctx, item.Deployment)
-
-			// Run detection now
-			alerts := d.unifiedDetector.DetectProcess(booleanpolicy.EnhancedDeployment{
-				Deployment:             item.Deployment,
-				Images:                 images,
-				NetworkPoliciesApplied: item.Netpols,
-			}, item.Indicator, item.IsInBaseline)
-			if len(alerts) == 0 {
-				// No need to process runtime alerts that have no violations
-				continue
-			}
-			alertResults := &central.AlertResults{
-				DeploymentId: item.Indicator.GetDeploymentId(),
-				Alerts:       alerts,
-				Stage:        storage.LifecycleStage_RUNTIME,
-			}
-
-			d.enforcer.ProcessAlertResults(central.ResourceAction_CREATE_RESOURCE, storage.LifecycleStage_RUNTIME, alertResults)
-
-			select {
-			case <-d.alertStopSig.Done():
-				continue
-			case d.output <- createAlertResultsMsg(item.Ctx, central.ResourceAction_CREATE_RESOURCE, alertResults):
-			}
+			d.detectAndAlertForIndicator(event)
 		}
 	}
+}
+
+func (d *detectorImpl) publishIndicator(ctx context.Context, pi *storage.ProcessIndicator) {
+	event := d.enrichIndicator(ctx, pi)
+	if event == nil {
+		return
+	}
+	if err := d.pubSubDispatcher.Publish(event); err != nil {
+		log.Errorf("Failed to publish process indicator event: %v", err)
+	}
+}
+
+func (d *detectorImpl) handleIndicatorEvent(event pubsub.Event) error {
+	indicatorEvent, ok := event.(*detectorEvents.IndicatorEvent)
+	if !ok {
+		return errors.Errorf("unexpected event type: %T", event)
+	}
+
+	// Block while paused (offline mode)
+	select {
+	case <-d.runtimeRunning.Done():
+	case <-d.detectorStopper.Flow().StopRequested():
+		return nil
+	}
+
+	d.detectAndAlertForIndicator(indicatorEvent)
+	return nil
 }
 
 func (d *detectorImpl) ProcessNetworkFlow(ctx context.Context, flow *storage.NetworkFlow) {
