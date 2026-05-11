@@ -96,6 +96,21 @@ func (m *MockImageView) EXPECT() *MockImageViewMockRecorder {
 	return m.recorder
 }
 
+// Count mocks base method.
+func (m *MockImageView) Count(ctx context.Context, q *v1.Query, options views.ReadOptions) (int, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Count", ctx, q, options)
+	ret0, _ := ret[0].(int)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Count indicates an expected call of Count.
+func (mr *MockImageViewMockRecorder) Count(ctx, q, options any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Count", reflect.TypeOf((*MockImageView)(nil).Count), ctx, q, options)
+}
+
 // Get mocks base method.
 func (m *MockImageView) Get(ctx context.Context, q *v1.Query, options views.ReadOptions) ([]images.ImageCore, error) {
 	m.ctrl.T.Helper()

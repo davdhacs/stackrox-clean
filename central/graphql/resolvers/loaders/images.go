@@ -45,7 +45,7 @@ func GetImageLoader(ctx context.Context) (ImageLoader, error) {
 type ImageLoader interface {
 	FromIDs(ctx context.Context, ids []string) ([]*storage.Image, error)
 	FromID(ctx context.Context, id string) (*storage.Image, error)
-	FromQuery(ctx context.Context, query *v1.Query) ([]*storage.Image, error)
+	FromQuery(ctx context.Context, query *v1.Query, opts views.ReadOptions) ([]*storage.Image, error)
 	FullImageWithID(ctx context.Context, id string) (*storage.Image, error)
 
 	CountFromQuery(ctx context.Context, query *v1.Query) (int32, error)
@@ -108,8 +108,10 @@ func (idl *imageLoaderImpl) FullImageWithID(ctx context.Context, id string) (*st
 }
 
 // FromQuery loads a set of images that match a query.
-func (idl *imageLoaderImpl) FromQuery(ctx context.Context, query *v1.Query) ([]*storage.Image, error) {
-	responses, err := idl.imageView.Get(ctx, query, views.ReadOptions{})
+// The provided ReadOptions are forwarded to the image view to control
+// server-side filtering (e.g. excluding images with active deployments).
+func (idl *imageLoaderImpl) FromQuery(ctx context.Context, query *v1.Query, opts views.ReadOptions) ([]*storage.Image, error) {
+	responses, err := idl.imageView.Get(ctx, query, opts)
 	if err != nil {
 		return nil, err
 	}

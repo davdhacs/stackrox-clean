@@ -18,5 +18,6 @@ type ImageCore interface {
 
 // ImageView interface provides functionality to fetch the image data.
 type ImageView interface {
+	Count(ctx context.Context, q *v1.Query, options views.ReadOptions) (int, error)
 	Get(ctx context.Context, q *v1.Query, options views.ReadOptions) ([]ImageCore, error)
 }

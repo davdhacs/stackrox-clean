@@ -25,6 +25,25 @@ type imageCoreViewImpl struct {
 	db     postgres.DB
 }
 
+func (v *imageCoreViewImpl) Count(ctx context.Context, q *v1.Query, options views.ReadOptions) (int, error) {
+	if err := common.ValidateQuery(q); err != nil {
+		return 0, err
+	}
+
+	queryCtx, cancel := contextutil.ContextWithTimeoutIfNotExists(ctx, queryTimeout)
+	defer cancel()
+
+	var runOpts []pgSearch.SelectRequestOption
+	if options.ExcludeImagesWithActiveDeployments {
+		imageCol, containerCol := imageAndContainerColumns()
+		runOpts = append(runOpts, pgSearch.WithWhereInterceptor(func(where string, values []any) (string, []any) {
+			return common.ApplyActiveDeploymentExclusion(where, values, imageCol, containerCol)
+		}))
+	}
+
+	return pgSearch.RunCountRequestForSchema(queryCtx, v.schema, q, v.db, runOpts...)
+}
+
 func (v *imageCoreViewImpl) Get(ctx context.Context, query *v1.Query, options views.ReadOptions) ([]ImageCore, error) {
 	if err := common.ValidateQuery(query); err != nil {
 		return nil, err
