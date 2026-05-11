@@ -13,6 +13,7 @@ import (
 	context "context"
 	reflect "reflect"
 
+	views "github.com/stackrox/rox/central/views"
 	common "github.com/stackrox/rox/central/views/common"
 	images "github.com/stackrox/rox/central/views/images"
 	v1 "github.com/stackrox/rox/generated/api/v1"
@@ -96,16 +97,16 @@ func (m *MockImageView) EXPECT() *MockImageViewMockRecorder {
 }
 
 // Get mocks base method.
-func (m *MockImageView) Get(ctx context.Context, q *v1.Query) ([]images.ImageCore, error) {
+func (m *MockImageView) Get(ctx context.Context, q *v1.Query, options views.ReadOptions) ([]images.ImageCore, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", ctx, q)
+	ret := m.ctrl.Call(m, "Get", ctx, q, options)
 	ret0, _ := ret[0].([]images.ImageCore)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockImageViewMockRecorder) Get(ctx, q any) *gomock.Call {
+func (mr *MockImageViewMockRecorder) Get(ctx, q, options any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockImageView)(nil).Get), ctx, q)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockImageView)(nil).Get), ctx, q, options)
 }

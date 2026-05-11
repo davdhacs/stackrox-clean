@@ -6,6 +6,7 @@ import (
 
 	"github.com/pkg/errors"
 	"github.com/stackrox/rox/central/imagev2/datastore"
+	"github.com/stackrox/rox/central/views"
 	imagesView "github.com/stackrox/rox/central/views/images"
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
@@ -108,7 +109,7 @@ func (idl *imageV2LoaderImpl) FullImageWithID(ctx context.Context, id string) (*
 
 // FromQuery loads a set of images that match a query.
 func (idl *imageV2LoaderImpl) FromQuery(ctx context.Context, query *v1.Query) ([]*storage.ImageV2, error) {
-	responses, err := idl.imageView.Get(ctx, query)
+	responses, err := idl.imageView.Get(ctx, query, views.ReadOptions{})
 	if err != nil {
 		return nil, err
 	}
