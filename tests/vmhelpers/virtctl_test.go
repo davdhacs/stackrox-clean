@@ -16,7 +16,13 @@ import (
 func TestSSHCommandArgs_UsesIdentityAndNamespace(t *testing.T) {
 	t.Parallel()
 
-	args := buildVirtctlSSHArgs("/usr/bin/virtctl", "stackrox", "vm-rhel9", "/tmp/id_rsa", "cloud-user", "/dev/null", "sudo", "true")
+	virt := Virtctl{
+		Path:           "/usr/bin/virtctl",
+		IdentityFile:   "/tmp/id_rsa",
+		Username:       "cloud-user",
+		KnownHostsFile: "/dev/null",
+	}
+	args := virt.buildSSHArgs("stackrox", "vm-rhel9", "sudo", "true")
 	require.Equal(t, []string{
 		"/usr/bin/virtctl", "ssh",
 		"--namespace", "stackrox",
@@ -42,7 +48,13 @@ func TestBuildVirtctlSSHCommand_QuotesArguments(t *testing.T) {
 func TestSCPToArgs_RemoteTargetShape(t *testing.T) {
 	t.Parallel()
 
-	args := buildVirtctlSCPToArgs("/usr/bin/virtctl", "stackrox", "vm-rhel9", "/tmp/id_rsa", "cloud-user", "/dev/null", "/local/roxagent", "/usr/local/bin/roxagent")
+	virt := Virtctl{
+		Path:           "/usr/bin/virtctl",
+		IdentityFile:   "/tmp/id_rsa",
+		Username:       "cloud-user",
+		KnownHostsFile: "/dev/null",
+	}
+	args := virt.buildSCPToArgs("stackrox", "vm-rhel9", "/local/roxagent", "/usr/local/bin/roxagent")
 	require.Equal(t, []string{
 		"/usr/bin/virtctl", "scp",
 		"--namespace", "stackrox",
@@ -60,14 +72,26 @@ func TestSCPToArgs_RemoteTargetShape(t *testing.T) {
 func TestSummarizeVirtctlCommand_SSHWithRemoteCommand(t *testing.T) {
 	t.Parallel()
 
-	args := buildVirtctlSSHArgs("/usr/bin/virtctl", "stackrox", "vm-rhel9", "/tmp/id_rsa", "cloud-user", "/dev/null", "sudo", "true")
+	virt := Virtctl{
+		Path:           "/usr/bin/virtctl",
+		IdentityFile:   "/tmp/id_rsa",
+		Username:       "cloud-user",
+		KnownHostsFile: "/dev/null",
+	}
+	args := virt.buildSSHArgs("stackrox", "vm-rhel9", "sudo", "true")
 	require.Equal(t, `virtctl ssh vmi/vm-rhel9 command="sudo" "true"`, summarizeVirtctlCommand(args))
 }
 
 func TestSummarizeVirtctlCommand_SCP(t *testing.T) {
 	t.Parallel()
 
-	args := buildVirtctlSCPToArgs("/usr/bin/virtctl", "stackrox", "vm-rhel9", "/tmp/id_rsa", "cloud-user", "/dev/null", "/local/roxagent", "/usr/local/bin/roxagent")
+	virt := Virtctl{
+		Path:           "/usr/bin/virtctl",
+		IdentityFile:   "/tmp/id_rsa",
+		Username:       "cloud-user",
+		KnownHostsFile: "/dev/null",
+	}
+	args := virt.buildSCPToArgs("stackrox", "vm-rhel9", "/local/roxagent", "/usr/local/bin/roxagent")
 	require.Equal(t, "virtctl scp vmi/vm-rhel9:/usr/local/bin/roxagent", summarizeVirtctlCommand(args))
 }
 

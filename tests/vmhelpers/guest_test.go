@@ -62,7 +62,14 @@ func TestClassifySSHFailure_Smoke(t *testing.T) {
 func TestSSHReachabilityPolicy_ClassifyFailureStopsEarlyOnAuthThreshold(t *testing.T) {
 	t.Parallel()
 
-	policy := DefaultSSHReachabilityPolicy
+	policy := SSHReachabilityPolicy{
+		PollInterval:                sshReachablePollInterval,
+		ProbeTimeout:                sshProbeAttemptTimeout,
+		AuthFailureThreshold:        sshAuthFailureThreshold,
+		BannerTimeoutThreshold:      sshBannerTimeoutThreshold,
+		NetworkUnreachableThreshold: sshNetworkUnreachableThreshold,
+		ProbeTimeoutThreshold:       sshProbeTimeoutThreshold,
+	}
 	counters := &sshProbeCounters{authFailures: policy.AuthFailureThreshold - 1}
 	decision := policy.classifyFailure(
 		counters,
