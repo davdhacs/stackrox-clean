@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/require"
 )
@@ -63,12 +64,12 @@ func TestSSHReachabilityPolicy_ClassifyFailureStopsEarlyOnAuthThreshold(t *testi
 	t.Parallel()
 
 	policy := SSHReachabilityPolicy{
-		PollInterval:                sshReachablePollInterval,
-		ProbeTimeout:                sshProbeAttemptTimeout,
-		AuthFailureThreshold:        sshAuthFailureThreshold,
-		BannerTimeoutThreshold:      sshBannerTimeoutThreshold,
-		NetworkUnreachableThreshold: sshNetworkUnreachableThreshold,
-		ProbeTimeoutThreshold:       sshProbeTimeoutThreshold,
+		PollInterval:                10 * time.Second,
+		ProbeTimeout:                20 * time.Second,
+		AuthFailureThreshold:        3,
+		BannerTimeoutThreshold:      6,
+		NetworkUnreachableThreshold: 36,
+		ProbeTimeoutThreshold:       6,
 	}
 	counters := &sshProbeCounters{authFailures: policy.AuthFailureThreshold - 1}
 	decision := policy.classifyFailure(
