@@ -4,7 +4,7 @@ package vmhelpers
 
 import (
 	"context"
-	"fmt"
+	"errors"
 	"testing"
 	"time"
 
@@ -171,43 +171,43 @@ func (c *captureResourceClient) Create(_ context.Context, obj *unstructured.Unst
 }
 
 func (*captureResourceClient) Update(context.Context, *unstructured.Unstructured, metav1.UpdateOptions, ...string) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("unexpected Update call")
+	return nil, errors.New("unexpected Update call")
 }
 
 func (*captureResourceClient) UpdateStatus(context.Context, *unstructured.Unstructured, metav1.UpdateOptions) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("unexpected UpdateStatus call")
+	return nil, errors.New("unexpected UpdateStatus call")
 }
 
 func (*captureResourceClient) Delete(context.Context, string, metav1.DeleteOptions, ...string) error {
-	return fmt.Errorf("unexpected Delete call")
+	return errors.New("unexpected Delete call")
 }
 
 func (*captureResourceClient) DeleteCollection(context.Context, metav1.DeleteOptions, metav1.ListOptions) error {
-	return fmt.Errorf("unexpected DeleteCollection call")
+	return errors.New("unexpected DeleteCollection call")
 }
 
 func (*captureResourceClient) Get(context.Context, string, metav1.GetOptions, ...string) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("unexpected Get call")
+	return nil, errors.New("unexpected Get call")
 }
 
 func (*captureResourceClient) List(context.Context, metav1.ListOptions) (*unstructured.UnstructuredList, error) {
-	return nil, fmt.Errorf("unexpected List call")
+	return nil, errors.New("unexpected List call")
 }
 
 func (*captureResourceClient) Watch(context.Context, metav1.ListOptions) (watch.Interface, error) {
-	return nil, fmt.Errorf("unexpected Watch call")
+	return nil, errors.New("unexpected Watch call")
 }
 
 func (*captureResourceClient) Patch(context.Context, string, types.PatchType, []byte, metav1.PatchOptions, ...string) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("unexpected Patch call")
+	return nil, errors.New("unexpected Patch call")
 }
 
 func (*captureResourceClient) Apply(context.Context, string, *unstructured.Unstructured, metav1.ApplyOptions, ...string) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("unexpected Apply call")
+	return nil, errors.New("unexpected Apply call")
 }
 
 func (*captureResourceClient) ApplyStatus(context.Context, string, *unstructured.Unstructured, metav1.ApplyOptions) (*unstructured.Unstructured, error) {
-	return nil, fmt.Errorf("unexpected ApplyStatus call")
+	return nil, errors.New("unexpected ApplyStatus call")
 }
 
 func TestVMFailureConditionDetail(t *testing.T) {
