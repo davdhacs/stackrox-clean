@@ -91,12 +91,12 @@ gh_download_release() {
         version="tags/${version}"
     fi
 
-    asset_id="$(curl -fsS \
+    asset_id="$(curl -fsS --retry 3 --retry-delay 5 --retry-connrefused \
         -H "Accept: application/vnd.github+json" \
         -H "X-GitHub-Api-Version: 2026-03-10" \
         "https://api.github.com/repos/${repo}/releases/${version}" \
         | jq -r --arg asset_name "${asset_name}" '.assets[]|select(.name==$asset_name)|.id')"
-    curl -fsSL \
+    curl -fsSL --retry 3 --retry-delay 5 --retry-connrefused \
         -H 'Accept: application/octet-stream' \
         -o "$target" \
         "https://api.github.com/repos/${repo}/releases/assets/${asset_id}"
