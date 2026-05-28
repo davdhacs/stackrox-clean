@@ -21,8 +21,8 @@ import (
 	"github.com/stackrox/rox/pkg/utils"
 )
 
-// redHatKeyBundlePath is the well-known path where the key bundle file is read from.
-// An external process downloads the bundle and writes it to this path.
+// redHatKeyBundlePath is the well-known path where the key bundle file is stored.
+// The file downloader writes the bundle here; the file watcher reads it.
 var redHatKeyBundlePath = filepath.Join(os.TempDir(), "redhat-signing-keys", "bundle.json")
 
 // Stoppable represents a background process that can be stopped.
