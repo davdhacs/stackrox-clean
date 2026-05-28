@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/pkg/errors"
 	"github.com/stackrox/rox/central/globaldb"
@@ -12,6 +13,7 @@ import (
 	"github.com/stackrox/rox/central/signatureintegration/store"
 	pgStore "github.com/stackrox/rox/central/signatureintegration/store/postgres"
 	"github.com/stackrox/rox/pkg/env"
+	"github.com/stackrox/rox/pkg/filedownloader"
 	"github.com/stackrox/rox/pkg/filewatcher"
 	"github.com/stackrox/rox/pkg/sac"
 	"github.com/stackrox/rox/pkg/signatures"
@@ -108,7 +110,18 @@ func startKeyBundleUpdater() {
 
 	interval := env.RedHatSigningKeyUpdateInterval.DurationSetting()
 
-	u := newKeyBundleUpdater(url, redHatKeyBundlePath, interval)
+	u := filedownloader.New(url, redHatKeyBundlePath, interval,
+		filedownloader.WithOnComplete(func(err error, duration time.Duration) {
+			updaterDownloadDuration.Observe(duration.Seconds())
+			if err != nil {
+				log.Warnf("Failed to download Red Hat signing key bundle from %q: %v", url, err)
+				updaterDownloadTotal.WithLabelValues("error").Inc()
+			} else {
+				updaterDownloadTotal.WithLabelValues("success").Inc()
+				updaterLastSuccessTimestamp.SetToCurrentTime()
+			}
+		}),
+	)
 	u.Start()
 	bundleUpdater = u
 }
