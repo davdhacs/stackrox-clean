@@ -13,6 +13,7 @@ import (
 
 	v1 "github.com/stackrox/rox/generated/api/v1"
 	"github.com/stackrox/rox/generated/storage"
+	"github.com/stackrox/rox/pkg/features"
 	"github.com/stackrox/rox/pkg/pointers"
 	"github.com/stackrox/rox/pkg/search"
 	"github.com/stackrox/rox/pkg/testutils/centralgrpc"
@@ -41,11 +42,29 @@ func TestInitContainers(t *testing.T) {
 }
 
 func (s *InitContainerSuite) SetupSuite() {
-	if os.Getenv("ROX_INIT_CONTAINER_SUPPORT") != "true" {
-		s.T().Skip("ROX_INIT_CONTAINER_SUPPORT not enabled")
+	// Check Central's API rather than os.Getenv because release builds exclude
+	// feature-flag-values.yaml from the Sensor chart, so the local env var can
+	// be "true" while the deployed components don't actually have the feature.
+	conn := centralgrpc.GRPCConnectionToCentral(s.T())
+
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+
+	featureFlagService := v1.NewFeatureFlagServiceClient(conn)
+	resp, err := featureFlagService.GetFeatureFlags(ctx, &v1.Empty{})
+	s.Require().NoError(err)
+
+	var enabled bool
+	for _, flag := range resp.GetFeatureFlags() {
+		if flag.GetEnvVar() == features.InitContainerSupport.EnvVar() {
+			enabled = flag.GetEnabled()
+			break
+		}
+	}
+	if !enabled {
+		s.T().Skip("ROX_INIT_CONTAINER_SUPPORT not enabled on Central")
 	}
 
-	conn := centralgrpc.GRPCConnectionToCentral(s.T())
 	s.deploymentService = v1.NewDeploymentServiceClient(conn)
 	s.policyService = v1.NewPolicyServiceClient(conn)
 	s.alertService = v1.NewAlertServiceClient(conn)
